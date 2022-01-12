@@ -37,11 +37,11 @@ fi
 if [ $STATE -eq 0 ] && [ $TEMP -ge $LIMIT ]
 then
   /usr/sbin/uhubctl -l $HUB -a 1 >/dev/null 2>/dev/null
-  echo "$(date) -  Modem reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated." >> $LOG
+  echo "$(date) -  Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated." >> $LOG
 elif [ $STATE -eq 1 ] && [ $TEMP -lt $LIMIT ]
 then
   /usr/sbin/uhubctl -l $HUB -a 0 >/dev/null 2>/dev/null
-  echo "$(date) -  Modem fell below $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
+  echo "$(date) -  Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
 fi
 
 # Keep log from getting too large
