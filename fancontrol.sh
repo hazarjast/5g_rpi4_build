@@ -5,8 +5,6 @@ PIDFILE=/var/run/fan_control.pid
 LOG=/var/log/fan_control.log
 LIMIT=55
 HUB="1-1.3"
-STATE=$(/usr/sbin/uhubctl -l $HUB | grep -m 1 -q off; echo $?)
-TEMP=$(echo -e AT+QTEMP | socat -t 1 - /dev/ttyUSB2,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]+")
 
 # Preliminary logic to ensure this only runs one instance at a time
 if [ -f $PIDFILE ]
@@ -33,6 +31,16 @@ else
     exit 1
   fi
 fi
+
+STATE=$(/usr/sbin/uhubctl -l $HUB | grep -m 1 -q off; echo $?)
+TEMP=$(echo -e AT+QTEMP | socat -W - /dev/ttyUSB2,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]+")
+
+if [ echo $TEMP | egrep -o "[0-9][0-9]+" ]
+then
+  break
+else
+  echo "$(date) -  Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting." >> $LOG
+  exit 1
 
 if [ $STATE -eq 0 ] && [ $TEMP -ge $LIMIT ]
 then
