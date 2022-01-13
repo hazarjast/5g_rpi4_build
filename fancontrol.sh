@@ -10,7 +10,7 @@ LOG=/var/log/fan_control.log
 LIMIT=55
 HUB="1-1.3"
 ATDEVICE=/dev/ttyUSB2
-$UHUBCTL=/usr/sbin/uhubctl
+UHUBCTL=/usr/sbin/uhubctl
 
 # Preliminary logic to ensure this only runs one instance at a time
 if [ -f $PIDFILE ]
