@@ -45,7 +45,7 @@ STATE=$($UHUBCTL -l $HUB | grep -o -m 1 'off\|power')
 TEMP=$(echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]+")
 
 # Check that returned fan state is valid before proceeding; error exit if not.
-if [ $(echo $STATE | egrep -o "off") ]
+if [ $(echo $STATE | grep -o -m 1 'off\|power') ]
 then
   continue
 else
