@@ -11,6 +11,7 @@ LIMIT=55
 HUB="1-1.3"
 ATDEVICE=/dev/ttyUSB2
 UHUBCTL=/usr/sbin/uhubctl
+TTRIES=0
 
 # Preliminary logic to ensure this only runs one instance at a time
 if [ -f $PIDFILE ]
@@ -38,29 +39,38 @@ else
   fi
 fi
 
+# Ensure hotplug does not interfere with the fans when we run uhubctl
+echo 0 > /sys/bus/usb/devices/usb1/authorized_default
+
 # Query current fan state from uhubctl
 STATE=$($UHUBCTL -l $HUB | grep -o -m 1 'off\|power')
 
 # Query current temperature of modem cpu
-TEMP=$(echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]+")
+TEMP=$(echo -e AT+QTEMP | socat -L - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
 
 # Check that returned fan state is valid before proceeding; error exit if not.
 if [ $(echo $STATE | grep -o -m 1 'off\|power') ]
 then
   continue
 else
-  echo "$(date) -  Could not obtain a valid state from the fan; maybe uhubctl is busy. Exiting." >> $LOG
+  echo "$(date) -  Could not obtain a valid state from the fan. Exiting." >> $LOG
   exit 1
 fi
 
-# Check that returned modem cpu temp is valid before proceeding; error exit if not.
-if [ $(echo $TEMP | egrep -o "[0-9][0-9]+") ]
-then
-  continue
-else
-  echo "$(date) -  Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting." >> $LOG
-  exit 1
-fi
+# Check that returned modem cpu temp is valid, if not, query it again until it gets a valid result
+while [ ! $(echo $TEMP | egrep -o "[0-9][0-9]") ]
+do
+  TEMP=$(echo -e AT+QTEMP | socat -L - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+  sleep 2
+  TTRIES=$(expr $TTRIES + 1)
+  if [ $TTRIES -lt 5 ]
+  then
+    continue
+  else
+    echo "$(date) -  Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting." >> $LOG
+    exit 1
+  fi
+done
 
 # Main fan control logic
 if [ $STATE = "off" ] && [ $TEMP -ge $LIMIT ]
