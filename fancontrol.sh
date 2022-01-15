@@ -54,7 +54,7 @@ then
       echo "$(date) - Could not backup ModemManager Hotplug config file. Exiting." >> $LOG
       exit 1
     else
-      echo "$(date) - Moved ModemManager Hotplug config '$HPFILE' from '$HPDIR' to '$HPDIR/bak' to avoid uhubctl conflicts." >> $LOG
+      echo "$(date) - Moved ModemManager Hotplug config '$HPDIR/$HPFILE' to '$HPDIR/bak/$HPFILE'; this avoids uhubctl conflicts." >> $LOG
     fi
   fi
 else
@@ -65,7 +65,7 @@ fi
 STATE=$($UHUBCTL -l $HUB | grep -o -m 1 'off\|power')
 
 # Query current temperature of modem cpu
-TEMP=$(echo -e AT+QTEMP | socat - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+TEMP=$(echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
 
 # Check that returned fan state is valid before proceeding; error exit if not.
 if [ $(echo $STATE | grep -o -m 1 'off\|power') ]
@@ -79,7 +79,7 @@ fi
 # Check that returned modem cpu temp is valid, if not, query it again up 5x until it gets a valid result
 while [ ! $(echo $TEMP | egrep -o "[0-9][0-9]") ]
 do
-  TEMP=$(echo -e AT+QTEMP | socat - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+  TEMP=$(echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
   sleep 2
   TTRIES=$(expr $TTRIES + 1)
   if [ $TTRIES -lt 5 ]
