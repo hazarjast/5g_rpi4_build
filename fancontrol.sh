@@ -7,17 +7,28 @@
 #
 # NOTE: This will disable ModemManager's Hotplug device cleanup script on first run.
 # The Hotplug ModemManager script must be disabled for uhubctl to work properly.
+# A ModemManager udev rule will also be added to unbind a secondary AT port for our use.
+# On first run, both Hotplug and udev changes will be made; a reboot will then be requested.
+#
+# Assumptions:
+# Intended to be used with a USB hub which supports Per Port Power Switching (PPPS).
+# Specifically written for hosts with a Quectel modem managed by ModemManager.
+# Modem should be in a 'usbnet' mode which provides a secondary AT port.
+# (ex. RM502Q-AE in QMI mode)
 #
 # Dependencies:
-# This script requires 'socat' and 'timeout' packages to be installed.
+# This script requires, 'uhubctl', 'modemmanager', 'socat', and 'timeout' packages to be installed.
 #
 
 PIDFILE=/var/run/fan_control.pid
 LOG=/var/log/fan_control.log
 LIMIT=55
 HUB="1-1.3"
-ATDEVICE=/dev/ttyUSB2
-UHUBCTL=/usr/sbin/uhubctl
+ATDEVICE=/dev/ttyUSB3
+MMVID="2c7c"
+MMPID="0800"
+MMUBIND="03"
+REBOOT=0
 TTRIES=0
 HPDIR=/etc/hotplug.d/usb
 
@@ -60,15 +71,47 @@ then
       echo "$(date) - Could not backup ModemManager Hotplug config file. Exiting." >> $LOG
       exit 1
     else
-      echo "$(date) - Moved ModemManager Hotplug config '$HPDIR/$HPFILE' to '$HPDIR/bak/$HPFILE'; this avoids uhubctl conflicts." >> $LOG
+      echo "$(date) - Removed incompatible ModemManager Hotplug config with backup at '$HPDIR/bak/$HPFILE'." >> $LOG
+      REBOOT=$(expr $REBOOT + 1)
     fi
   fi
 else
   continue
 fi
 
+# Unbind ModemManager from the secondary AT port so we can use it
+# Without this 'socat' commands can hang indefinitely
+if [ ! -f "/lib/udev/rules/77-mm-test.rules" ]
+then
+cat << EOF >> /lib/udev/rules/77-mm-test.rules
+ACTION!="add|change|move|bind", GOTO="mm_test_end"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="$MMVID", GOTO="mm_test_rules"
+GOTO="mm_test_end"
+
+LABEL="mm_test_rules"
+SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", ENV{.MM_USBIFNUM}="$attr{bInterfaceNumber}"
+ATTRS{idVendor}=="$MMVID", ATTRS{idProduct}=="$MMPID", ENV{.MM_USBIFNUM}=="$MMUBIND", ENV{ID_MM_PORT_IGNORE}="1"
+LABEL="mm_test_end"
+EOF
+
+  echo "$(date) - Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID." >> $LOG
+  REBOOT=$(expr $REBOOT + 1)
+
+else
+  continue
+fi
+
+# If initial ModemManager Hotplug/udev changes were made, prompt for user reboot
+if [ $REBOOT -gt 0 ]
+then
+  echo "$(date) - ModemManager config changes were made. Prompted user to reboot." >> $LOG
+  echo "ModemManager config changes were made. Please reboot OpenWRT before executing $$ again."
+else
+  continue
+fi
+
 # Query current fan state from uhubctl
-STATE=$($UHUBCTL -l $HUB | grep -o -m 1 'off\|power')
+STATE=$(uhubctl -l $HUB | grep -o -m 1 'off\|power')
 
 # Query current temperature of modem cpu
 TEMP=$(timeout 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
@@ -100,11 +143,11 @@ done
 # Main fan control logic
 if [ $STATE = "off" ] && [ $TEMP -ge $LIMIT ]
 then
-  $UHUBCTL -l $HUB -a on >/dev/null 2>/dev/null
+  uhubctl -l $HUB -a on >/dev/null 2>/dev/null
   echo "$(date) - Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated." >> $LOG
 elif [ $STATE = "power" ] && [ $TEMP -lt $LIMIT ]
 then
-  $UHUBCTL -l $HUB -a off >/dev/null 2>/dev/null
+  uhubctl -l $HUB -a off >/dev/null 2>/dev/null
   echo "$(date) - Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
 fi
 
