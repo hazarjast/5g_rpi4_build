@@ -2,11 +2,14 @@
 
 #
 # Script info:
-# Activate intake and exhaust fans if modem cpu temp exceeds $LIMIT (in degress celsius)
-# Deactivate fans if modem cpu temp falls below $LIMIT
+# Activate intake and exhaust fans if modem cpu temp exceeds $LIMIT (in degress celsius).
+# Deactivate fans if modem cpu temp falls below $LIMIT.
+#
+# NOTE: This will disable ModemManager's Hotplug device cleanup script on first run.
+# The Hotplug ModemManager script must be disabled for uhubctl to work properly.
 #
 # Dependencies:
-# This script requires 'socat' and 'timeout' packages to be installed
+# This script requires 'socat' and 'timeout' packages to be installed.
 #
 
 PIDFILE=/var/run/fan_control.pid
