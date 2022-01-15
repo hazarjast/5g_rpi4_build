@@ -23,24 +23,38 @@ then
   then
     echo "$(date) - Process already running. Exiting." >> $LOG
     exit 1
+  else
+    continue
   fi
-elif [ ! $(echo $$ > $PIDFILE) ]
-then
-  echo "$(date) - Could not create PID file. Exiting." >> $LOG
-  exit 1
+else
+  echo $$ > $PIDFILE
+  if [ ! -f "$PIDFILE" ] && [ ! $(grep -s $$ $PIDFILE) ]
+  then
+    echo "$(date) - Could not create PID file. Exiting." >> $LOG
+    exit 1
+  else
+    continue
+  fi
 fi
 
 # Check for ModemManager hotplug actions and move them if present
 # This mitigates inconsistent uhubctl behavior when checking fan state
 if [ HPFILE=$(ls $HPDIR | grep modemmanager) ] && [ -d "$HPDIR/$HPFILE" ]
 then
-  if [ ! $(mkdir $HPDIR/bak) ]
+  mkdir $HPDIR/bak 2>/dev/null
+  if [ ! -d "$HPDIR/bak" ]
   then
-    echo "$(date) - Could not create ModemManager Hotplug backup directory. Exiting." >> $LOG
+    echo "$(date) - Could not backup ModemManager Hotplug config backup directory. Exiting." >> $LOG
     exit 1
   else
     mv $HPDIR/$HPFILE $HPDIR/bak/
-    echo "$(date) - Moved ModemManager Hotplug config '$HPFILE' from '$HPDIR' to '$HPDIR/bak' to avoid uhubctl conflicts." >> $LOG
+    if [ ! -f "$HPDIR/bak/$HPFILE" ]
+    then
+      echo "$(date) - Could not backup ModemManager Hotplug config file. Exiting." >> $LOG
+      exit 1
+    else
+      echo "$(date) - Moved ModemManager Hotplug config '$HPFILE' from '$HPDIR' to '$HPDIR/bak' to avoid uhubctl conflicts." >> $LOG
+    fi
   fi
 else
   continue
