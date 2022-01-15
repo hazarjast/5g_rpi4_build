@@ -39,7 +39,8 @@ fi
 
 # Check for ModemManager hotplug actions and move them if present
 # This mitigates inconsistent uhubctl behavior when checking fan state
-if [ HPFILE=$(ls $HPDIR | grep modemmanager) ] && [ -d "$HPDIR/$HPFILE" ]
+HPFILE=$(ls $HPDIR | grep modemmanager)
+if [ ! -z $HPFILE ] && [ -d "$HPDIR/$HPFILE" ]
 then
   mkdir $HPDIR/bak 2>/dev/null
   if [ ! -d "$HPDIR/bak" ]
@@ -47,7 +48,7 @@ then
     echo "$(date) - Could not backup ModemManager Hotplug config backup directory. Exiting." >> $LOG
     exit 1
   else
-    mv $HPDIR/$HPFILE $HPDIR/bak/
+    mv $HPDIR/$HPFILE $HPDIR/bak/ 2>/dev/null
     if [ ! -f "$HPDIR/bak/$HPFILE" ]
     then
       echo "$(date) - Could not backup ModemManager Hotplug config file. Exiting." >> $LOG
