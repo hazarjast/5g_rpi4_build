@@ -106,6 +106,7 @@ if [ $REBOOT -gt 0 ]
 then
   echo "$(date) - ModemManager config changes were made. Prompted user to reboot." >> $LOG
   echo "ModemManager config changes were made. Please reboot OpenWRT before executing $$ again."
+  exit 0
 else
   continue
 fi
