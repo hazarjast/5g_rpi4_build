@@ -81,9 +81,9 @@ fi
 
 # Unbind ModemManager from the secondary AT port so we can use it
 # Without this 'socat' commands can hang indefinitely
-if [ ! -f "/lib/udev/rules/77-mm-test.rules" ]
+if [ ! -f "/lib/udev/rules.d/77-mm-test.rules" ]
 then
-cat << EOF >> /lib/udev/rules/77-mm-test.rules
+cat << EOF >> /lib/udev/rules.d/77-mm-test.rules
 ACTION!="add|change|move|bind", GOTO="mm_test_end"
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="$MMVID", GOTO="mm_test_rules"
 GOTO="mm_test_end"
@@ -105,7 +105,7 @@ fi
 if [ $REBOOT -gt 0 ]
 then
   echo "$(date) - ModemManager config changes were made. Prompted user to reboot." >> $LOG
-  echo "ModemManager config changes were made. Please reboot OpenWRT before executing $$ again."
+  echo "ModemManager config changes were made. Please reboot OpenWRT before executing this script again."
   exit 0
 else
   continue
