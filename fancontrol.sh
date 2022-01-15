@@ -35,6 +35,7 @@ fi
 if [ HPFILE=$(ls $HPDIR | grep modemmanager) ] && [ -d "$HPDIR/$HPFILE" ]
 then
   if [ ! $(mkdir $HPDIR/bak) ]
+  then
     echo "$(date) - Could not create ModemManager Hotplug backup directory. Exiting." >> $LOG
     exit 1
   else
