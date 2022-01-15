@@ -5,6 +5,9 @@
 # Activate intake and exhaust fans if modem cpu temp exceeds $LIMIT (in degress celsius)
 # Deactivate fans if modem cpu temp falls below $LIMIT
 #
+# Dependencies:
+# This script requires 'socat' and 'timeout' packages to be installed
+#
 
 PIDFILE=/var/run/fan_control.pid
 LOG=/var/log/fan_control.log
@@ -65,7 +68,7 @@ fi
 STATE=$($UHUBCTL -l $HUB | grep -o -m 1 'off\|power')
 
 # Query current temperature of modem cpu
-TEMP=$(echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+TEMP=$(timeout 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
 
 # Check that returned fan state is valid before proceeding; error exit if not.
 if [ $(echo $STATE | grep -o -m 1 'off\|power') ]
@@ -79,7 +82,7 @@ fi
 # Check that returned modem cpu temp is valid, if not, query it again up 5x until it gets a valid result
 while [ ! $(echo $TEMP | egrep -o "[0-9][0-9]") ]
 do
-  TEMP=$(echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+  TEMP=$(timeout 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
   sleep 2
   TTRIES=$(expr $TTRIES + 1)
   if [ $TTRIES -lt 5 ]
