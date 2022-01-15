@@ -75,7 +75,7 @@ if [ $(echo $STATE | grep -o -m 1 'off\|power') ]
 then
   continue
 else
-  echo "$(date) -  Could not obtain a valid state from the fan. Exiting." >> $LOG
+  echo "$(date) - Could not obtain a valid state from the fan. Exiting." >> $LOG
   exit 1
 fi
 
@@ -89,7 +89,7 @@ do
   then
     continue
   else
-    echo "$(date) -  Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting." >> $LOG
+    echo "$(date) - Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting." >> $LOG
     exit 1
   fi
 done
@@ -98,11 +98,11 @@ done
 if [ $STATE = "off" ] && [ $TEMP -ge $LIMIT ]
 then
   $UHUBCTL -l $HUB -a on >/dev/null 2>/dev/null
-  echo "$(date) -  Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated." >> $LOG
+  echo "$(date) - Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated." >> $LOG
 elif [ $STATE = "power" ] && [ $TEMP -lt $LIMIT ]
 then
   $UHUBCTL -l $HUB -a off >/dev/null 2>/dev/null
-  echo "$(date) -  Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
+  echo "$(date) - Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
 fi
 
 # Houskeeping for log and pidfile
