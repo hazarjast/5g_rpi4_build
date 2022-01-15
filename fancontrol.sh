@@ -40,7 +40,7 @@ fi
 # Check for ModemManager hotplug actions and move them if present
 # This mitigates inconsistent uhubctl behavior when checking fan state
 HPFILE=$(ls $HPDIR | grep modemmanager)
-if [ ! -z $HPFILE ] && [ -d "$HPDIR/$HPFILE" ]
+if [ ! -z $HPFILE ] && [ -f "$HPDIR/$HPFILE" ]
 then
   mkdir $HPDIR/bak 2>/dev/null
   if [ ! -d "$HPDIR/bak" ]
