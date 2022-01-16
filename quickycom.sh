@@ -14,14 +14,13 @@
 # Modem should be in a USB mode which provides a free AT serial port.
 #
 # Dependencies:
-# This script requires 'socat' package to be installed along with any serial drivers for the interface.
+# This script requires 'timeout' and 'socat' packages to be installed along with any serial drivers for the interface.
 #
 
 PIDFILE=/var/run/quickycom.pid
-LOG=/var/log/quickycom.log
 LIMIT=55
 ATDEVICE=/dev/ttyUSB3
-CMD=$1
+CMD='$1'
 MMVID="2c7c"
 MMPID="0800"
 MMUBIND="03"
@@ -32,7 +31,7 @@ then
   PID=$(cat $PIDFILE)
   if [ $(ps | awk '{print $1}' | grep $PID) ]
   then
-    echo "$(date) - Process already running. Exiting." >> $LOG
+    echo "$(date) - Quickycom already running. Exiting."
     exit 1
   else
     continue
@@ -41,7 +40,7 @@ else
   echo $$ > $PIDFILE
   if [ ! -f "$PIDFILE" ] && [ ! $(grep -s $$ $PIDFILE) ]
   then
-    echo "$(date) - Could not create PID file. Exiting." >> $LOG
+    echo "$(date) - Could not create PID file. Exiting."
     exit 1
   else
     continue
@@ -50,6 +49,7 @@ fi
 
 # Unbind ModemManager from the secondary AT port so we can use it
 # Without this 'socat' commands can hang indefinitely
+# See: https://github.com/openwrt/packages/issues/14197
 # If changes are made, prompt for user reboot
 if [ ! -f "/lib/udev/rules.d/77-mm-test.rules" ]
 then
@@ -64,8 +64,8 @@ ATTRS{idVendor}=="$MMVID", ATTRS{idProduct}=="$MMPID", ENV{.MM_USBIFNUM}=="$MMUB
 LABEL="mm_test_end"
 EOF
 
-  echo "$(date) - Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID." >> $LOG
-  echo "$(date) - ModemManager config changes were made. Prompted user to reboot." >> $LOG
+  echo "$(date) - Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
+  echo "$(date) - ModemManager config changes were made. Prompted user to reboot."
   echo "ModemManager config changes were made. Please reboot OpenWRT before executing this script again."
   exit 0
 else
@@ -73,14 +73,12 @@ else
 fi
 
 # Cleanup input to escape double quotes
-CMD=$(echo $CMD | )
-TEMP=$(timeout 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+CMD=$(echo $CMD | sed 's/["]/\\"/g')
 
-# Houskeeping for log and pidfile
-if [ -f $LOG ]
-then
-  echo "$(tail -1000 $LOG)" > $LOG
-fi
+# Send cleaned command to the interface; kill socat if it hangs
+timeout -k 5 5 echo -e $CMD | socat -W - $ATDEVICE,crnl
+
+# Houskeeping for pidfile
 rm $PIDFILE
 
 exit 0
