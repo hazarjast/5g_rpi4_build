@@ -114,7 +114,7 @@ fi
 STATE=$(uhubctl -l $HUB | grep -o -m 1 'off\|power')
 
 # Query current temperature of modem cpu
-TEMP=$(timeout 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
 
 # Check that returned fan state is valid, if not, query it again up 5x until it gets a valid result
 # If no valid result returned, exit with error
@@ -138,7 +138,7 @@ done
 TRIES=0
 while [ ! $(echo $TEMP | egrep -o "[0-9][0-9]") ]
 do
-  TEMP=$(timeout 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+  TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
   sleep 2
   TRIES=$(expr $TRIES + 1)
   if [ $TRIES -lt 5 ]
