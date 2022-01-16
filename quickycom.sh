@@ -18,9 +18,8 @@
 #
 
 PIDFILE=/var/run/quickycom.pid
-LIMIT=55
 ATDEVICE=/dev/ttyUSB3
-CMD='$1'
+CMD="$1"
 MMVID="2c7c"
 MMPID="0800"
 MMUBIND="03"
@@ -71,9 +70,6 @@ EOF
 else
   continue
 fi
-
-# Cleanup input to escape double quotes
-CMD=$(echo $CMD | sed 's/["]/\\"/g')
 
 # Send cleaned command to the interface; kill socat if it hangs
 timeout -k 5 5 echo -e $CMD | socat -W - $ATDEVICE,crnl
