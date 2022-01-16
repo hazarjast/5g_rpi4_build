@@ -4,7 +4,9 @@
 # Script info:
 # Wrapper script for 'socat' which communicates with a USB modem's 'AT' serial interface.
 # Noticed that 'socat' would sometimes hang on interface communication even with native locking switches.
-# This wrapper adds another layer of lock protection to the serial interface along with a kill failsafe.
+# This wrapper allows easier sending of AT commands to the modem and includes an additional timeout failsafe.
+# AT commands containing double quotes should still have them escaped in the argument:
+# (ex. './quickycom.sh AT+QENG=\"servingcell\"')
 #
 # NOTE: On first run this scrip checks that ModemManager is unbound from the selected AT interface.
 # If this is not the case, a udev rule is created to accomplish this and user is then prompted to reboot.
@@ -71,7 +73,7 @@ else
   continue
 fi
 
-# Send cleaned command to the interface; kill socat if it hangs
+# Send command to the interface; SIGTERM and then SIGKILL (if necesary) socat if it hangs
 timeout -k 5 5 echo -e $CMD | socat -W - $ATDEVICE,crnl
 
 # Houskeeping for pidfile
