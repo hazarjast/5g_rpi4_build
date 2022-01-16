@@ -29,7 +29,6 @@ MMVID="2c7c"
 MMPID="0800"
 MMUBIND="03"
 REBOOT=0
-TTRIES=0
 HPDIR=/etc/hotplug.d/usb
 
 # Preliminary logic to ensure this only runs one instance at a time
@@ -118,21 +117,29 @@ STATE=$(uhubctl -l $HUB | grep -o -m 1 'off\|power')
 TEMP=$(timeout 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
 
 # Check that returned fan state is valid before proceeding; error exit if not.
-if [ $(echo $STATE | grep -o -m 1 'off\|power') ]
-then
-  continue
-else
-  echo "$(date) - Could not obtain a valid state from the fan. Exiting." >> $LOG
-  exit 1
-fi
+TRIES=0
+while [ ! $(echo $STATE | grep -o -m 1 'off\|power') ]
+do
+  STATE=$(uhubctl -l $HUB | grep -o -m 1 'off\|power')
+  sleep 2
+  TRIES=$(expr $TRIES + 1)
+  if [ $TRIES -lt 5 ]
+  then
+    continue
+  else
+    echo "$(date) - Could not obtain a valid state from the fan. Exiting." >> $LOG
+    exit 1
+  fi
+done
 
 # Check that returned modem cpu temp is valid, if not, query it again up 5x until it gets a valid result
+TRIES=0
 while [ ! $(echo $TEMP | egrep -o "[0-9][0-9]") ]
 do
   TEMP=$(timeout 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
   sleep 2
-  TTRIES=$(expr $TTRIES + 1)
-  if [ $TTRIES -lt 5 ]
+  TRIES=$(expr $TRIES + 1)
+  if [ $TRIES -lt 5 ]
   then
     continue
   else
