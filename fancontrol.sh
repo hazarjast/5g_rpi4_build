@@ -109,6 +109,8 @@ then
   uhubctl -l $HUB -a off >/dev/null 2>/dev/null
   rm $FANON
   echo "$(date) - Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
+else
+  uhubctl -l $HUB -a off >/dev/null 2>/dev/null
 fi
 
 # Houskeeping for log and pidfile
