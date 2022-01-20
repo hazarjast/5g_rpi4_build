@@ -28,6 +28,8 @@
 # *Dependencies*
 # This script requires 'timeout' and 'socat' packages to be installed along with any serial drivers for the interface.
 #
+# Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
+#
 
 PIDFILE=/var/run/quickycom.pid
 CMD="$1"
