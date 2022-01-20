@@ -11,12 +11,20 @@
 #
 # Assumptions:
 # Intended to be used with a USB hub which supports Per Port Power Switching (PPPS).
-# Specifically written for hosts with a Quectel modem managed by ModemManager.
-# Modem should be in a 'usbnet' mode which provides a secondary AT port.
-# (ex. RM502Q-AE in QMI mode)
+# Specifically written for hosts with a modem managed by ModemManager.
+# Modem should be in a 'usbnet' mode which provides a secondary AT port:
+# ex. RM502Q-AE in QMI mode
+#
+# Required Input:
+# $HUB, $PRODID - Obtain w/ 'lsusb' and 'lsusb -v' ('idVendor:idProduct'; 'idVendor/idProduct/bcdDevice')
+# For $PRODID, ignore leading zeros in idVendor/idProduct and separating decimal in bcdDevice
+# ex. 'idVendor 0x05e3, idProduct 0x0608, bcdDevice 60.52' = "5e3/608/6052"
+# $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules':
+# ex. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'
+# (MMVID="2c7c", MMPID="0800", MMUBIND="03")
 #
 # Dependencies:
-# This script requires, 'uhubctl', 'modemmanager', 'socat', and 'timeout' packages to be installed.
+# This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', and 'timeout' packages to be installed.
 #
 
 PIDFILE=/var/run/fan_control.pid
@@ -24,7 +32,8 @@ FANON=/var/run/fan.on
 STATE="off"
 LOG=/var/log/fan_control.log
 LIMIT=55
-HUB="1-1.3"
+HUB="05e3:0608"
+PRODID="5e3/608/6052"
 ATDEVICE=/dev/ttyUSB3
 MMVID="2c7c"
 MMPID="0800"
@@ -53,8 +62,34 @@ else
   fi
 fi
 
-# Unbind ModemManager from the secondary AT port so we can use it
-# Without this 'socat' commands can hang indefinitely
+# Add a hotplug rule to keep fans from starting themselves
+# uhubctl power off sometimes causes hub to drop/reconect from kernel
+# This hotplug rule ensures fans are stopped in this scenario
+if [ ! -f "/etc/hotplug.d/usb/20-uhubctl-usb" ]
+then
+cat << EOF >> /etc/hotplug.d/usb/20-uhubctl-usb
+#!/bin/sh
+
+# If D-Link USB hub disconnects and comes back, stop the connected fans
+
+PRODID="$PRODID"
+HUB="$HUB"
+BINARY="/usr/sbin/uhubctl -n \$HUB -a off"
+
+if [ "\${PRODUCT}" = "\${PRODID}" ]; then
+    if [ "\${ACTION}" = "add" ]; then
+        \${BINARY}
+    fi
+fi
+EOF
+
+  echo "$(date) - Set hotplug rule for USB hub '$HUB'." >> $LOG
+else
+  continue
+fi
+
+# Unbind ModemManager from an AT port so we can use it
+# Without this 'socat' commands can hang or return no value
 if [ ! -f "/lib/udev/rules.d/77-mm-test.rules" ]
 then
 cat << EOF >> /lib/udev/rules.d/77-mm-test.rules
@@ -75,7 +110,7 @@ else
   continue
 fi
 
-# Check current fan state
+# Check if fan is already on
 [ -f $FANON ] && STATE="power"
 
 # Query current temperature of modem cpu
@@ -101,16 +136,16 @@ done
 # Main fan control logic
 if [ $STATE = "off" ] && [ $TEMP -ge $LIMIT ]
 then
-  uhubctl -l $HUB -a on >/dev/null 2>/dev/null
+  uhubctl -n $HUB -a on >/dev/null 2>/dev/null
   touch $FANON
   echo "$(date) - Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated." >> $LOG
 elif [ $STATE = "power" ] && [ $TEMP -lt $LIMIT ]
 then
-  uhubctl -l $HUB -a off >/dev/null 2>/dev/null
+  uhubctl -n $HUB -a off >/dev/null 2>/dev/null
   rm $FANON
   echo "$(date) - Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
 else
-  uhubctl -l $HUB -a off >/dev/null 2>/dev/null
+  uhubctl -n $HUB -a off >/dev/null 2>/dev/null
 fi
 
 # Houskeeping for log and pidfile
