@@ -30,6 +30,8 @@
 # *Dependencies*
 # This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', and 'timeout' packages to be installed.
 #
+# Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
+#
 
 PIDFILE=/var/run/fan_control.pid
 FANON=/var/run/fan.on
