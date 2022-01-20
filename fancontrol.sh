@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Script info:
+# *Script info*
 # Activate intake and exhaust fans if modem cpu temp exceeds $LIMIT (in degress celsius).
 # Deactivate fans if modem cpu temp falls below $LIMIT.
 #
@@ -9,21 +9,25 @@
 # User is then prompted to reboot OpenWRT for the change to take effect.
 # Be sure that $MMUBIND is populated with the correct MM USBIFNUM before running this script!
 #
-# Assumptions:
+# *Assumptions*
 # Intended to be used with a USB hub which supports Per Port Power Switching (PPPS).
 # Specifically written for hosts with a modem managed by ModemManager.
 # Modem should be in a 'usbnet' mode which provides a secondary AT port:
 # ex. RM502Q-AE in QMI mode
 #
-# Required Input:
+# *Required Input*
 # $HUB, $PRODID - Obtain w/ 'lsusb' and 'lsusb -v' ('idVendor:idProduct'; 'idVendor/idProduct/bcdDevice')
 # For $PRODID, ignore leading zeros in idVendor/idProduct and separating decimal in bcdDevice
 # ex. 'idVendor 0x05e3, idProduct 0x0608, bcdDevice 60.52' = "5e3/608/6052"
+#
+# $PORTS - Populate with hub port numbers of connected fans using appropriate uhubctl syntax:
+# ex. '2-3' (ports two through three), '1,4 (ports one and four), etc.
+#
 # $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules':
 # ex. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'
 # (MMVID="2c7c", MMPID="0800", MMUBIND="03")
 #
-# Dependencies:
+# *Dependencies*
 # This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', and 'timeout' packages to be installed.
 #
 
@@ -34,6 +38,7 @@ LOG=/var/log/fan_control.log
 LIMIT=55
 HUB="05e3:0608"
 PRODID="5e3/608/6052"
+PORTS="3-4"
 ATDEVICE=/dev/ttyUSB3
 MMVID="2c7c"
 MMPID="0800"
@@ -74,7 +79,8 @@ cat << EOF >> /etc/hotplug.d/usb/20-uhubctl-usb
 
 PRODID="$PRODID"
 HUB="$HUB"
-BINARY="/usr/sbin/uhubctl -n \$HUB -a off"
+PORTS="$PORTS"
+BINARY="/usr/sbin/uhubctl -n \$HUB -p \$PORTS -a off"
 
 if [ "\${PRODUCT}" = "\${PRODID}" ]; then
     if [ "\${ACTION}" = "add" ]; then
@@ -136,16 +142,16 @@ done
 # Main fan control logic
 if [ $STATE = "off" ] && [ $TEMP -ge $LIMIT ]
 then
-  uhubctl -n $HUB -a on >/dev/null 2>/dev/null
+  uhubctl -n $HUB -p $PORTS -a on >/dev/null 2>/dev/null
   touch $FANON
   echo "$(date) - Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated." >> $LOG
 elif [ $STATE = "power" ] && [ $TEMP -lt $LIMIT ]
 then
-  uhubctl -n $HUB -a off >/dev/null 2>/dev/null
+  uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
   rm $FANON
   echo "$(date) - Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
 else
-  uhubctl -n $HUB -a off >/dev/null 2>/dev/null
+  uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
 fi
 
 # Houskeeping for log and pidfile
