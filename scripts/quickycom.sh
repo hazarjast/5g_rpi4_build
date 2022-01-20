@@ -3,25 +3,36 @@
 #
 # Script info:
 # Wrapper script for 'socat' which communicates with a USB modem's 'AT' serial interface.
-# Noticed that 'socat' would sometimes hang on interface communication even with native locking switches.
-# This wrapper allows easier sending of AT commands to the modem and includes an additional timeout failsafe.
-# AT commands containing double quotes should still have them escaped in the argument:
-# (ex. './quickycom.sh AT+QENG=\"servingcell\"')
+# This wrapper allows sending of AT commands, which provide instant return output, to the modem easily.
+# Includes an additional 'timeout' failsafe (SIGTERM after $TIMEOUT, SIGKILL after an add'l $TIMEOUT).
+# For some query commands (ex. +COPS, +QSCAN, etc.) it is recommended to open an interactive session:
+# ex. 'socat -W - $ATDEVICE'. This is because it may take a long time for the modem to return a value.
 #
-# NOTE: On first run this scrip checks that ModemManager is unbound from the selected AT interface.
+# NOTE: On first run this script checks that ModemManager is unbound from the selected AT interface.
 # If this is not the case, a udev rule is created to accomplish this and user is then prompted to reboot.
+# Also creates a symlink on first run so that you can execute as simply 'qcom' thereafter.
 #
-# Assumptions:
+# *Assumptions*
 # Specifically written for OpenWRT hosts with a modem managed by ModemManager.
 # Modem should be in a USB mode which provides a free AT serial port.
+# This script should exist under '/scripts/'.
+# Just like raw 'socat' and other serial terminals, double quotes should be escaped (using backslash):
+# ex. 'qcom AT+QENG=\"servingcell\"'
 #
-# Dependencies:
+# *Required Input*
+# $CMD, $TIMEOUT - AT command, timeout period before termindation (in seconds)
+# $ATDEVICE, $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules':
+# ex. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'
+# ($ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03")
+#
+# *Dependencies*
 # This script requires 'timeout' and 'socat' packages to be installed along with any serial drivers for the interface.
 #
 
 PIDFILE=/var/run/quickycom.pid
-ATDEVICE=/dev/ttyUSB3
 CMD="$1"
+TIMEOUT=5
+ATDEVICE=/dev/ttyUSB3
 MMVID="2c7c"
 MMPID="0800"
 MMUBIND="03"
@@ -73,8 +84,17 @@ else
   continue
 fi
 
-# Send command to the interface; SIGTERM and then SIGKILL (if necesary) socat if it hangs
-timeout -k 5 5 echo -e $CMD | socat -W - $ATDEVICE,crnl
+# Create symlink for easy calls going forward
+[ -f /usr/sbin/qcom ] || ln -s /scripts/quickycom.sh /usr/sbin/qcom
+
+# If $CMD entered, send it to the interface; SIGTERM and then SIGKILL (if necesary) socat if it hangs
+if [ -z $CMD ]
+then
+  echo "No AT command entered. Exiting."
+  exit 1
+else
+  timeout -k $TIMEOUT $TIMEOUT echo -e $CMD | socat -W - $ATDEVICE,crnl
+fi
 
 # Houskeeping for pidfile
 rm $PIDFILE
