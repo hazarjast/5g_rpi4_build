@@ -16,6 +16,8 @@
 # This script requires 'modemmanager' v1.10+ to be installed.
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
+# Inspired by Nicholas Smith's work here:
+# https://github.com/nickberry17/modem-manager-keepalive/blob/master/30-keepalive_modemmanager
 #
 
 PIDFILE=/var/run/mm_hotplug.pid
@@ -31,7 +33,7 @@ BINDEX="$($MMCLI -m $MINDEX -K | egrep -o 'bearers\.value\[1\].*:.*' | egrep -o 
 MSTATUS=/tmp/modem.status
 BSTATUS=/tmp/bearer.status
 
-[ "$INTERFACE" != "mobiledata" ] && exit 0
+[ "$INTERFACE" != "$MIFACE" ] && exit 0
 [ "$ACTION" = "ifup" ] && exit 0
 
 # Preliminary logic to ensure this only runs one instance at a time
