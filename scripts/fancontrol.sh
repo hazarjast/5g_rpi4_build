@@ -23,9 +23,9 @@
 # $PORTS - Populate with hub port numbers of connected fans using appropriate uhubctl syntax:
 # ex. '2-3' (ports two through three), '1,4 (ports one and four), etc.
 #
-# $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules':
+# $ATDEVICE, $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules':
 # ex. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'
-# (MMVID="2c7c", MMPID="0800", MMUBIND="03")
+# (ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03")
 #
 # *Dependencies*
 # This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', and 'timeout' packages to be installed.
