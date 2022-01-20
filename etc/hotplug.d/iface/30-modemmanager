@@ -1,0 +1,120 @@
+#!/bin/sh
+
+#
+# *Script info*
+# Watch Modem status under ModemManager to ensure it stays connected to the Internet.
+# If connectivity is lost, cycle ModemManager and bring the modem interface up
+#
+# *Assumptions*
+# This assumes only a single modem is in use with ModemManager.
+#
+# *Required Input*
+# $PINGDST, $WAIT - Domains to ping, how long to wait for ModemManager.
+# $MIFACE - The modem's interface name from '/etc/config/network'.
+#
+# *Dependencies*
+# This script requires 'modemmanager' v1.10+ to be installed.
+#
+
+PIDFILE=/var/run/mm_hotplug.pid
+INFO="/usr/bin/logger -t MM_HOTPLUG"
+ERROR="/usr/bin/logger -p err -t MM_HOTPLUG"
+PINGDST="google.com cloudflare.com"
+WAIT=10
+MMCLI="/usr/bin/mmcli"
+MMDMN="/etc/init.d/modemmanager"
+MIFACE="WWAN"
+MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
+BINDEX="$($MMCLI -m $MINDEX -K | egrep -o 'bearers\.value\[1\].*:.*' | egrep -o '/org/freedesktop/.*')"
+MSTATUS=/tmp/modem.status
+BSTATUS=/tmp/bearer.status
+
+[ "$INTERFACE" != "mobiledata" ] && exit 0
+[ "$ACTION" = "ifup" ] && exit 0
+
+# Preliminary logic to ensure this only runs one instance at a time
+if [ -f $PIDFILE ]
+then
+  PID=$(cat $PIDFILE)
+  if [ $(ps | awk '{print $1}' | grep $PID) ]
+  then
+    $ERROR "Hotplug modem script already running. Exiting."
+    exit 0
+  else
+    continue
+  fi
+else
+  echo $$ > $PIDFILE
+  if [ ! -f "$PIDFILE" ]
+  then
+    $ERROR "Could not create PID file. Exiting."
+    exit 0
+  else
+    continue
+  fi
+fi
+
+if [ -z $MINDEX ]
+then
+  checkandreconnect
+else
+  $MMCLI -m "$MINDEX" > $MSTATUS
+  echo $BINDEX > $BSTATUS
+  STATUS=$(grep -wo 'disabled\|idle\|connected\|searching\|registered' $MSTATUS)
+fi
+
+pinger () {
+CONNECTED=0
+for DEST in $PINGDST
+do
+  if [ $CONNECTED -eq 0 ]
+  then
+    $INFO "Checking interet connectivity by pinging $DEST."
+    ping -c1 $DEST >/dev/null 2>/dev/null
+    [ $? -eq 0 ] && CONNECTED=1
+  fi
+done
+}
+
+connect() {
+  case "$RE" in
+    1) $INFO "Waiting $WAIT seconds for ModemManager to finish before checking connection."
+      sleep $WAIT ; pinger
+      if [ $CONNECTED -eq 1 ]
+      then
+          $INFO "Modem is connected to the internet."
+      else
+         $INFO "Cannot reach internet. Reconnecting."
+          $MMDMN stop && sleep 2 && $MMDMN start
+          sleep $WAIT
+          ifup $MIFACE
+      fi
+    ;;
+    0) $INFO "Initiating connection."
+      $MMDMN && sleep 2 && $MMDMN start
+      sleep $WAIT
+      ifup $MIFACE
+    ;;
+  esac
+}
+
+$INFO "Hotplug modem script is running."
+
+case "$STATUS" in
+   "disabled") $INFO "Modem is disabled; connecting." ; RE=0 ; connect
+   ;;
+   "idle") $INFO "Modem is idle; connecting." ; RE=0 ; connect
+   ;;
+   "connected") $INFO "Modem is connected; reconnecting." ; RE=1 ; connect
+   ;;
+   "searching") $INFO "Modem is searching. reconnecting." ; RE=1 ; connect
+   ;;
+   "registered") $INFO "Modem is registered; reconnecting." ; RE=1 ; connect
+   ;;
+esac
+
+# Housekeeping for pid file
+rm $PIDFILE
+
+$INFO "Hotplug modem script finished."
+exit 0
