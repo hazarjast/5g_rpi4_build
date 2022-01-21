@@ -10,13 +10,14 @@
 #
 # *Required Input*
 # $PINGDST, $WAIT - Domains to ping, how long to wait for ModemManager.
-# $MIFACE - The modem's interface name from '/etc/config/network'.
+# $PIFACE, $MIFACE - Actual, logical names of the modem interfaces.
 #
 # *Dependencies*
 # This script requires 'modemmanager' v1.10+ to be installed.
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
-# Inspired by Nicholas Smith's work here:
+#
+# Inspired by Nicholas Smith's excellent work here:
 # https://github.com/nickberry17/modem-manager-keepalive/blob/master/30-keepalive_modemmanager
 #
 
@@ -27,6 +28,7 @@ PINGDST="google.com cloudflare.com"
 WAIT=10
 MMCLI="/usr/bin/mmcli"
 MMDMN="/etc/init.d/modemmanager"
+PIFACE="wwan0"
 MIFACE="WWAN"
 MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
 BINDEX="$($MMCLI -m $MINDEX -K | egrep -o 'bearers\.value\[1\].*:.*' | egrep -o '/org/freedesktop/.*')"
@@ -58,6 +60,8 @@ else
   fi
 fi
 
+# Check for modem index presence and check/connect if not found
+# If modem index exists, grep for concerning status indicators
 if [ -z $MINDEX ]
 then
   RE=1 ; connect
@@ -67,6 +71,8 @@ else
   STATUS=$(grep -wo 'disabled\|idle\|connected\|searching\|registered' $MSTATUS)
 fi
 
+# Wrapper for 'ping' which tests internet connectivity
+# Ping instructed to use the modem interface
 pinger () {
 CONNECTED=0
 for DEST in $PINGDST
@@ -74,12 +80,14 @@ do
   if [ $CONNECTED -eq 0 ]
   then
     $INFO "Checking interet connectivity by pinging $DEST."
-    ping -c1 $DEST >/dev/null 2>/dev/null
+    ping -I $PIFACE -c1 $DEST >/dev/null 2>/dev/null
     [ $? -eq 0 ] && CONNECTED=1
   fi
 done
 }
 
+# Checks for connectivity with 'pinger' and exits early if found
+# Restarts ModemManager if no connectivity is found
 connect() {
   case "$RE" in
     1) $INFO "Waiting $WAIT seconds for ModemManager to finish before checking connection."
@@ -104,6 +112,9 @@ connect() {
 
 $INFO "Hotplug modem script is running."
 
+# Logic gate for actioning returned modem status
+# If modem is disabled or idle, connect
+# If modem is connected/searching/registered, 'RE'connect
 case "$STATUS" in
    "disabled") $INFO "Modem is disabled; connecting." ; RE=0 ; connect
    ;;
