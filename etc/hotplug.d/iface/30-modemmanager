@@ -60,7 +60,7 @@ fi
 
 if [ -z $MINDEX ]
 then
-  checkandreconnect
+  RE=1 ; connect
 else
   $MMCLI -m "$MINDEX" > $MSTATUS
   echo $BINDEX > $BSTATUS
