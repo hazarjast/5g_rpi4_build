@@ -6,11 +6,11 @@
 # If connectivity is lost, cycle ModemManager and bring the modem interface up
 #
 # *Assumptions*
-# This assumes only a single modem is in use with ModemManager.
+# Script to be used for a single ModemManager modem defined as $LIFACE in uci.
 #
-# *Required Input*
+# *Required Inputs*
 # $PINGDST, $WAIT - Domains to ping, how long to wait for ModemManager.
-# $PIFACE, $MIFACE - Actual, logical names of the modem interfaces.
+# $LIFACE - Logical (uci) name of the modem interface.
 #
 # *Dependencies*
 # This script requires 'modemmanager' v1.10+ to be installed.
@@ -21,18 +21,18 @@
 # https://github.com/nickberry17/modem-manager-keepalive/blob/master/30-keepalive_modemmanager
 #
 
+PINGDST="google.com cloudflare.com"
+WAIT=10
+LIFACE="WWAN"
+PIFACE=$(ubus -v call network.interface.$LIFACE status | egrep -o 'l3_device.*' | tr -d "l3_device: \|\"\,")
 PIDFILE=/var/run/mm_hotplug.pid
 INFO="/usr/bin/logger -t MODEM_WATCHER"
 ERROR="/usr/bin/logger -p err -t MODEM_WATCHER"
-LOGSTRNG="\[modem0\] state changed (connected ->"
-PINGDST="google.com cloudflare.com"
-WAIT=10
+LOGSTRNG="state changed (connected ->"
 MMCLI="/usr/bin/mmcli"
 MMDMN="/etc/init.d/modemmanager"
-PIFACE="wwan0"
-MIFACE="WWAN"
 MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
-BINDEX="$($MMCLI -m $MINDEX -K | egrep -o 'bearers\.value\[1\].*:.*' | egrep -o '/org/freedesktop/.*')"
+BINDEX="$($MMCLI -m $MINDEX -K | egrep -o 'bearers\.value.*' | egrep -o '/org/freedesktop/.*')"
 MSTATUS=/tmp/modem.status
 BSTATUS=/tmp/bearer.status
 
@@ -59,7 +59,7 @@ else
 fi
 
 # Wrapper for 'ping' which tests internet connectivity
-# Ping instructed to use the modem interface
+# Ping instructed to use the $PIFACE gateway
 pinger () {
 CONNECTED=0
 for DEST in $PINGDST
@@ -86,13 +86,13 @@ connect() {
          $INFO "Cannot reach internet. Reconnecting."
           $MMDMN stop && sleep 2 && $MMDMN start
           sleep $WAIT
-          ifup $MIFACE
+          ifup $LIFACE
       fi
     ;;
     0) $INFO "Initiating connection."
       $MMDMN && sleep 2 && $MMDMN start
       sleep $WAIT
-      ifup $MIFACE
+      ifup $LIFACE
     ;;
   esac
 }
@@ -118,11 +118,11 @@ check() {
     ;;
     "idle") $INFO "Modem is idle; connecting." ; RE=0 ; connect
     ;;
-    "connected") $INFO "Modem is connected; reconnecting." ; RE=1 ; connect
+    "connected") $INFO "Modem is connected; checking connectivity." ; RE=1 ; connect
     ;;
-    "searching") $INFO "Modem is searching. reconnecting." ; RE=1 ; connect
+    "searching") $INFO "Modem is searching; checking connectivity." ; RE=1 ; connect
     ;;
-    "registered") $INFO "Modem is registered; reconnecting." ; RE=1 ; connect
+    "registered") $INFO "Modem is registered; checking connectivity." ; RE=1 ; connect
      ;;
   esac
   $INFO "Modem check script finished."
@@ -140,8 +140,3 @@ watcher() {
 }
 
 watcher
-
-# Housekeeping for pid file
-rm $PIDFILE
-
-exit 0
