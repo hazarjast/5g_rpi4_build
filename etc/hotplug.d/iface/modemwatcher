@@ -42,8 +42,8 @@ then
   PID=$(cat $PIDFILE)
   if [ $(ps | awk '{print $1}' | grep $PID) ]
   then
-    $ERROR "Hotplug modem script already running. Exiting."
-    exit 0
+    $ERROR "Already running. Exiting."
+    exit 1
   else
     continue
   fi
@@ -52,7 +52,7 @@ else
   if [ ! -f "$PIDFILE" ]
   then
     $ERROR "Could not create PID file. Exiting."
-    exit 0
+    exit 1
   else
     continue
   fi
@@ -77,19 +77,19 @@ done
 # Restarts ModemManager if no connectivity is found
 connect() {
   case "$RE" in
-    1) $INFO "Waiting $WAIT seconds for ModemManager to finish before checking connection."
+    1) $INFO "Waiting $WAIT seconds for modem activity to finish before checking connection."
       sleep $WAIT ; pinger
       if [ $CONNECTED -eq 1 ]
       then
           $INFO "Modem is connected to the internet."
       else
-         $INFO "Cannot reach internet. Reconnecting."
+         $INFO "Cannot reach internet. Cycling ModemManager and bringing $LIFACE up."
           $MMDMN stop && sleep 2 && $MMDMN start
           sleep $WAIT
           ifup $LIFACE
       fi
     ;;
-    0) $INFO "Initiating connection."
+    0) $INFO "Cycling ModemManager and bringing $LIFACE up."
       $MMDMN && sleep 2 && $MMDMN start
       sleep $WAIT
       ifup $LIFACE
@@ -112,7 +112,7 @@ check() {
 
   # Logic gate for actioning returned modem status
   # If modem is disabled or idle, connect
-  # If modem is connected/searching/registered, 'RE'connect
+  # If modem is connected/searching/registered, check and 'RE'connect
   case "$STATUS" in
     "disabled") $INFO "Modem is disabled; connecting." ; RE=0 ; connect
     ;;
@@ -125,7 +125,7 @@ check() {
     "registered") $INFO "Modem is registered; checking connectivity." ; RE=1 ; connect
      ;;
   esac
-  $INFO "Modem check script finished."
+  $INFO "Sleeping until next state change."
 }
 
 # Log watcher
