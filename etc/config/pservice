@@ -1,0 +1,6 @@
+config pservice
+	option name 'modemwatcher'
+	option respawn_maxfail 0
+	option command /bin/sh
+	list args -c
+	list args 'exec /scripts/modemwatcher.sh'
