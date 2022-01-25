@@ -45,7 +45,7 @@ MMVID="2c7c"
 MMPID="0800"
 MMUBIND="03"
 LIMIT=55
-$INTERVAL=60
+INTERVAL=60
 PIDFILE=/var/run/fan_control.pid
 INFO="/usr/bin/logger -t FAN_CONTROL"
 ERROR="/usr/bin/logger -p err -t FAN_CONTROL"
@@ -117,11 +117,13 @@ fi
 # Query current temperature of modem cpu
 # Check that returned modem cpu temp is valid, if not, query it again up 5x until it gets a valid result
 # If no valid result returned, exit with error
-qtemp () {
+qtemp() {
+TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -wo "[0-9][0-9]")
 TRIES=0
-while [ ! $(echo $TEMP | egrep -o "[0-9][0-9]") ]
+
+while ! $(echo $TEMP | egrep -qwo "[0-9][0-9]")
 do
-  TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
+  TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -wo "[0-9][0-9]")
   sleep 2
   TRIES=$(expr $TRIES + 1)
   if [ $TRIES -lt 5 ]
@@ -135,7 +137,7 @@ done &
 }
 
 # Main fan control logic
-main () {
+main() {
 while true
 do
   [ -f $FANON ] && STATE="power" ; qtemp # Check current fan state and modem temp
@@ -150,17 +152,15 @@ do
     uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
     rm $FANON
     $INFO "Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated."
-  else
-    uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
   fi
   sleep $INTERVAL
 done &
 }
 
-# Cleanup $PIDFILE and kill main process with any descendants
+# Cleanup $PIDFILE, $FANON and kill main process with any descendants
 terminate() {
   PID=$(cat $PIDFILE)
-  rm -f $PIDFILE
+  rm -f $FANON $PIDFILE
   pkill -P $PID
 }
 
