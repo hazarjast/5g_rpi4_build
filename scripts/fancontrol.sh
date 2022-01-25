@@ -49,8 +49,6 @@ INTERVAL=60
 PIDFILE=/var/run/fan_control.pid
 INFO="/usr/bin/logger -t FAN_CONTROL"
 ERROR="/usr/bin/logger -p err -t FAN_CONTROL"
-FANON=/var/run/fan.on
-STATE="off"
 HPDIR=/etc/hotplug.d/usb
 
 # Preliminary logic to ensure this only runs one instance at a time
@@ -140,27 +138,26 @@ done &
 main() {
 while true
 do
-  [ -f $FANON ] && STATE="power" ; qtemp # Check current fan state and modem temp
+  qtemp # Check current modem temp
 
-  if [ $STATE = "off" ] && [ $TEMP -ge $LIMIT ]
+  if [ $TEMP -ge $LIMIT ]
   then
     uhubctl -n $HUB -p $PORTS -a on >/dev/null 2>/dev/null
-    touch $FANON
     $INFO "Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated."
-  elif [ $STATE = "power" ] && [ $TEMP -lt $LIMIT ]
+  elif [ $TEMP -lt $LIMIT ]
   then
     uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
-    rm $FANON
     $INFO "Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated."
   fi
   sleep $INTERVAL
 done &
 }
 
-# Cleanup $PIDFILE, $FANON and kill main process with any descendants
+# Cleanup $PIDFILE and kill main process with any descendants
 terminate() {
   PID=$(cat $PIDFILE)
-  rm -f $FANON $PIDFILE
+  rm -f $PIDFILE
+  $INFO "Fan controller killed!"
   pkill -P $PID
 }
 
