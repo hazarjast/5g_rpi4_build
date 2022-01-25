@@ -7,13 +7,14 @@
 #
 # *Assumptions*
 # Script to be used for a single ModemManager modem defined as $LIFACE in uci.
+# Package 'pservice' should be installed and used to run this as a daemon.
 #
 # *Required Inputs*
 # $PINGDST, $WAIT - Domains to ping, how long to wait for ModemManager.
 # $LIFACE - Logical (uci) name of the modem interface.
 #
 # *Dependencies*
-# This script requires 'modemmanager' v1.10+ to be installed.
+# This script requires 'modemmanager', 'pservice', and 'pkill' packages.
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
 #
@@ -37,25 +38,37 @@ MSTATUS=/tmp/modem.status
 BSTATUS=/tmp/bearer.status
 
 # Preliminary logic to ensure this only runs one instance at a time
-if [ -f $PIDFILE ]
+[ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
+case "$PFEXST" in
+  "true") PID=$(cat $PIDFILE)
+         $(ps | awk '{print $1}' | grep -q $PID) && \
+         $($ERROR "Already running. Exiting." ; exit 1) || \
+         $(echo $$ > $PIDFILE || $ERROR "Could not create PID file. Exiting." ; exit 1)
+  ;;
+  "false") $(echo $$ > $PIDFILE) || $($ERROR "Could not create PID file. Exiting." ; exit 1)
+  ;;
+esac
+
+# Sets up this script as a 'pservice' daemon if it's not already
+PSCONF=/etc/config/pservice
+if ! $(grep -q 'modemwatcher' $PSCONF) 
 then
-  PID=$(cat $PIDFILE)
-  if [ $(ps | awk '{print $1}' | grep $PID) ]
-  then
-    $ERROR "Already running. Exiting."
-    exit 1
-  else
-    continue
-  fi
+[ -f /etc/config/pservice ] && mv $PSCONF $PSCONF.bak
+cat << EOF >> $PSCONF
+config pservice
+        option name 'modemwatcher'
+        option respawn_maxfail 0
+        option command /bin/sh
+        list args -c
+        list args 'exec /scripts/modemwatcher.sh'
+EOF
+
+  echo "Setup 'modemwatcher' daemon. Execute the following to start it:"
+  echo "/etc/init.d/pservice enable ; /etc/init.d/pservice start"
+  $INFO "Setup 'modemwatcher' as a daemon and prompted user to start pservice."
+  exit 0
 else
-  echo $$ > $PIDFILE
-  if [ ! -f "$PIDFILE" ]
-  then
-    $ERROR "Could not create PID file. Exiting."
-    exit 1
-  else
-    continue
-  fi
+  continue
 fi
 
 # Wrapper for 'ping' which tests internet connectivity
@@ -128,7 +141,7 @@ check() {
   $INFO "Sleeping until next state change."
 }
 
-# Log watcher
+# Watch the system log for modem status change
 watcher() {
   logread -f | while read line
   do
@@ -136,7 +149,19 @@ watcher() {
     then
       check
     fi
-  done
+  done &
 }
 
+# Cleanup $PIDFILE and kill watcher loop when daemon is stopped
+# Required for use w/ 'pservice' since it doesn't stop descendants
+terminate() {
+  PID=$(cat $PIDFILE)
+  rm -f $PIDFILE
+  pkill -P $PID
+}
+
+trap terminate SIGHUP SIGINT SIGQUIT SIGTERM
+
 watcher
+
+wait
