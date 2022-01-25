@@ -2,7 +2,7 @@
 
 #
 # *Script info*
-# Activate intake and exhaust fans if modem cpu temp exceeds $LIMIT (in degress celsius).
+# Activate intake and exhaust fans if modem cpu temp exceeds $LIMIT.
 # Deactivate fans if modem cpu temp falls below $LIMIT.
 #
 # NOTE: A ModemManager udev rule is added at first run to unbind a secondary AT port for our use.
@@ -27,17 +27,16 @@
 # ex. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'
 # (ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03")
 #
+# $LIMIT - Temperature threshold in degrees celsius when fans should be activated.
+#
+# $INTERVAL - Time in seconds between polling modem temperature.
+#
 # *Dependencies*
-# This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', and 'timeout' packages to be installed.
+# This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', 'timeout', and 'pkill' packages to be installed.
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
 #
 
-PIDFILE=/var/run/fan_control.pid
-FANON=/var/run/fan.on
-STATE="off"
-LOG=/var/log/fan_control.log
-LIMIT=55
 HUB="05e3:0608"
 PRODID="5e3/608/6052"
 PORTS="3-4"
@@ -45,29 +44,26 @@ ATDEVICE=/dev/ttyUSB3
 MMVID="2c7c"
 MMPID="0800"
 MMUBIND="03"
+LIMIT=55
+$INTERVAL=60
+PIDFILE=/var/run/fan_control.pid
+INFO="/usr/bin/logger -t FAN_CONTROL"
+ERROR="/usr/bin/logger -p err -t FAN_CONTROL"
+FANON=/var/run/fan.on
+STATE="off"
 HPDIR=/etc/hotplug.d/usb
 
 # Preliminary logic to ensure this only runs one instance at a time
-if [ -f $PIDFILE ]
-then
-  PID=$(cat $PIDFILE)
-  if [ $(ps | awk '{print $1}' | grep $PID) ]
-  then
-    echo "$(date) - Process already running. Exiting." >> $LOG
-    exit 1
-  else
-    continue
-  fi
-else
-  echo $$ > $PIDFILE
-  if [ ! -f "$PIDFILE" ]
-  then
-    echo "$(date) - Could not create PID file. Exiting." >> $LOG
-    exit 1
-  else
-    continue
-  fi
-fi
+[ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
+case "$PFEXST" in
+  "true") PID=$(cat $PIDFILE)
+         $(ps | awk '{print $1}' | grep -q $PID) && \
+         $($ERROR "Already running. Exiting." ; exit 1) || \
+         $(echo $$ > $PIDFILE || $ERROR "Could not create PID file. Exiting." ; exit 1)
+  ;;
+  "false") $(echo $$ > $PIDFILE) || $($ERROR "Could not create PID file. Exiting." ; exit 1)
+  ;;
+esac
 
 # Add a hotplug rule to keep fans from starting themselves
 # uhubctl power off sometimes causes hub to drop/reconect from kernel
@@ -91,7 +87,7 @@ if [ "\${PRODUCT}" = "\${PRODID}" ]; then
 fi
 EOF
 
-  echo "$(date) - Set hotplug rule for USB hub '$HUB'." >> $LOG
+  $INFO "Set hotplug rule for USB hub '$HUB'."
 else
   continue
 fi
@@ -111,21 +107,17 @@ ATTRS{idVendor}=="$MMVID", ATTRS{idProduct}=="$MMPID", ENV{.MM_USBIFNUM}=="$MMUB
 LABEL="mm_test_end"
 EOF
 
-  echo "$(date) - Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID." >> $LOG
+  $INFO "Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
   echo "ModemManager config changes were made. Please reboot OpenWRT before executing this script again."
-  echo "$(date) - ModemManager config changes were made. Prompted user to reboot." >> $LOG
+  $INFO "ModemManager config changes were made. Prompted user to reboot."
 else
   continue
 fi
 
-# Check if fan is already on
-[ -f $FANON ] && STATE="power"
-
 # Query current temperature of modem cpu
-TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -o "[0-9][0-9]")
-
 # Check that returned modem cpu temp is valid, if not, query it again up 5x until it gets a valid result
 # If no valid result returned, exit with error
+qtemp () {
 TRIES=0
 while [ ! $(echo $TEMP | egrep -o "[0-9][0-9]") ]
 do
@@ -136,31 +128,45 @@ do
   then
     continue
   else
-    echo "$(date) - Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting." >> $LOG
+    $INFO "Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting."
     exit 1
   fi
-done
+done &
+}
 
 # Main fan control logic
-if [ $STATE = "off" ] && [ $TEMP -ge $LIMIT ]
-then
-  uhubctl -n $HUB -p $PORTS -a on >/dev/null 2>/dev/null
-  touch $FANON
-  echo "$(date) - Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated." >> $LOG
-elif [ $STATE = "power" ] && [ $TEMP -lt $LIMIT ]
-then
-  uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
-  rm $FANON
-  echo "$(date) - Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated." >> $LOG
-else
-  uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
-fi
+main () {
+while true
+do
+  [ -f $FANON ] && STATE="power" ; qtemp # Check current fan state and modem temp
 
-# Houskeeping for log and pidfile
-if [ -f $LOG ]
-then
-  echo "$(tail -1000 $LOG)" > $LOG
-fi
-rm $PIDFILE
+  if [ $STATE = "off" ] && [ $TEMP -ge $LIMIT ]
+  then
+    uhubctl -n $HUB -p $PORTS -a on >/dev/null 2>/dev/null
+    touch $FANON
+    $INFO "Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated."
+  elif [ $STATE = "power" ] && [ $TEMP -lt $LIMIT ]
+  then
+    uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
+    rm $FANON
+    $INFO "Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated."
+  else
+    uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
+  fi
+  sleep $INTERVAL
+done &
+}
 
-exit 0
+# Cleanup $PIDFILE and kill main process with any descendants
+terminate() {
+  PID=$(cat $PIDFILE)
+  rm -f $PIDFILE
+  pkill -P $PID
+}
+
+trap terminate SIGHUP SIGINT SIGQUIT SIGTERM
+
+main
+
+wait
+
