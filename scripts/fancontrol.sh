@@ -108,6 +108,7 @@ EOF
   $INFO "Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
   echo "ModemManager config changes were made. Please reboot OpenWRT before executing this script again."
   $INFO "ModemManager config changes were made. Prompted user to reboot."
+  exit 0
 else
   continue
 fi
