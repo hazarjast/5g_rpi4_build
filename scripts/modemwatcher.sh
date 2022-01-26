@@ -128,15 +128,15 @@ check() {
   # If modem is disabled or idle, connect
   # If modem is connected/searching/registered, check and 'RE'connect
   case "$STATUS" in
-    "disabled") $INFO "Modem is disabled; connecting." ; RE=0 ; connect
+    "disabled") $INFO "Modem is disabled; connecting." && RE=0 && connect
     ;;
-    "idle") $INFO "Modem is idle; connecting." ; RE=0 ; connect
+    "idle") $INFO "Modem is idle; connecting." && RE=0 && connect
     ;;
-    "connected") $INFO "Modem is connected; checking connectivity." ; RE=1 ; connect
+    "connected") $INFO "Modem is connected; checking connectivity." && RE=1 && connect
     ;;
-    "searching") $INFO "Modem is searching; checking connectivity." ; RE=1 ; connect
+    "searching") $INFO "Modem is searching; checking connectivity." && RE=1 && connect
     ;;
-    "registered") $INFO "Modem is registered; checking connectivity." ; RE=1 ; connect
+    "registered") $INFO "Modem is registered; checking connectivity." && RE=1 && connect
      ;;
   esac
   $INFO "Sleeping until next state change."
