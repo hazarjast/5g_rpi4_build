@@ -50,6 +50,7 @@ PIDFILE=/var/run/fan_control.pid
 INFO="/usr/bin/logger -t FAN_CONTROL"
 ERROR="/usr/bin/logger -p err -t FAN_CONTROL"
 HPDIR=/etc/hotplug.d/usb
+FANON=/var/run/fan.on
 
 # Preliminary logic to ensure this only runs one instance at a time
 [ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
@@ -76,11 +77,14 @@ cat << EOF >> /etc/hotplug.d/usb/20-uhubctl-usb
 PRODID="$PRODID"
 HUB="$HUB"
 PORTS="$PORTS"
+FANON=/var/run/fan.on
 BINARY="/usr/sbin/uhubctl -n \$HUB -p \$PORTS -a off"
+INFO="/usr/bin/logger -t hotplug"
 
 if [ "\${PRODUCT}" = "\${PRODID}" ]; then
     if [ "\${ACTION}" = "add" ]; then
-        \${BINARY}
+        \${BINARY} && rm -f \$FANON
+        \$INFO "USB hub unexpectedly detached; powered off fan ports."
     fi
 fi
 EOF
@@ -137,17 +141,22 @@ done &
 
 # Main fan control logic
 main() {
+$INFO "Fan controller initialized!"
+
 while true
 do
   qtemp # Check current modem temp
+  [ -f $FANON ] && STATE="on" || STATE="off" # Check current fan state
 
   if [ $TEMP -ge $LIMIT ]
   then
-    uhubctl -n $HUB -p $PORTS -a on >/dev/null 2>/dev/null
+    [ $STATE = "off" ] && \
+    $(uhubctl -n $HUB -p $PORTS -a on >/dev/null 2>/dev/null && touch $FANON) && \
     $INFO "Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated."
   elif [ $TEMP -lt $LIMIT ]
   then
-    uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null
+    [ $STATE = "on" ] && \
+    $(uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null && rm $FANON) && \
     $INFO "Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated."
   fi
   sleep $INTERVAL
