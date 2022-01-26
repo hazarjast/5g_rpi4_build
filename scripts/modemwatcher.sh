@@ -144,6 +144,7 @@ check() {
 
 # Watch the system log for modem status change
 watcher() {
+  $INFO "Modem watcher initialized!"
   logread -f | while read line
   do
     if [ "${line#*$LOGSTRNG*}" != "$line" ]
@@ -158,6 +159,7 @@ watcher() {
 terminate() {
   PID=$(cat $PIDFILE)
   rm -f $PIDFILE
+  $INFO "Modem watcher killed!"
   pkill -P $PID
 }
 
