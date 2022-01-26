@@ -14,6 +14,7 @@
 # Specifically written for hosts with a modem managed by ModemManager.
 # Modem should be in a 'usbnet' mode which provides a secondary AT port:
 # ex. RM502Q-AE in QMI mode
+# # Package 'pservice' should be installed and used to run this as a daemon.
 #
 # *Required Input*
 # $HUB, $PRODID - Obtain w/ 'lsusb' and 'lsusb -v' ('idVendor:idProduct'; 'idVendor/idProduct/bcdDevice')
@@ -32,7 +33,7 @@
 # $INTERVAL - Time in seconds between polling modem temperature.
 #
 # *Dependencies*
-# This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', 'timeout', and 'pkill' packages to be installed.
+# This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', 'timeout', 'pservice' and 'pkill' packages to be installed.
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
 #
