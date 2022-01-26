@@ -53,7 +53,7 @@ esac
 PSCONF=/etc/config/pservice
 if ! $(grep -q 'modemwatcher' $PSCONF) 
 then
-[ -f /etc/config/pservice ] && mv $PSCONF $PSCONF.bak
+[ -f /etc/config/pservice ] && cp -p $PSCONF $PSCONF.bak
 cat << EOF >> $PSCONF
 config pservice
         option name 'modemwatcher'
