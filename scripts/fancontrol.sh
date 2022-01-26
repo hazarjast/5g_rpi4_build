@@ -96,6 +96,7 @@ fi
 
 # Unbind ModemManager from an AT port so we can use it
 # Without this 'socat' commands can hang or return no value
+# Also setup this script as a 'pservice' daemon if it's not already
 if [ ! -f "/lib/udev/rules.d/77-mm-test.rules" ]
 then
 cat << EOF >> /lib/udev/rules.d/77-mm-test.rules
@@ -108,10 +109,29 @@ SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", ENV{.MM_USBIFNUM}="\$attr{bInt
 ATTRS{idVendor}=="$MMVID", ATTRS{idProduct}=="$MMPID", ENV{.MM_USBIFNUM}=="$MMUBIND", ENV{ID_MM_PORT_IGNORE}="1"
 LABEL="mm_test_end"
 EOF
+  
+  PSCONF=/etc/config/pservice
+  if ! $(grep -q 'fancontrol' $PSCONF) 
+  then
+    [ -f /etc/config/pservice ] && cp -p $PSCONF $PSCONF.bak
+cat << EOF >> $PSCONF
 
+config pservice
+        option name 'fancontrol'
+        option respawn_maxfail 0
+        option command /bin/sh
+        list args -c
+        list args 'exec /scripts/fancontrol.sh'
+EOF
+
+    $INFO "Setup 'fancontrol' as a pservice daemon."
+  else
+    continue
+  fi
+  
   $INFO "Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
-  echo "ModemManager config changes were made. Please reboot OpenWRT before executing this script again."
-  $INFO "ModemManager config changes were made. Prompted user to reboot."
+  echo "ModemManager and/or pservice config changes were made. Please reboot OpenWRT to take effect."
+  $INFO "ModemManager and/or pservice config changes were made. Prompted user to reboot."
   exit 0
 else
   continue
