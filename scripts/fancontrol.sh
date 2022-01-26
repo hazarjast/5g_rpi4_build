@@ -58,10 +58,10 @@ FANON=/var/run/fan.on
 case "$PFEXST" in
   "true") PID=$(cat $PIDFILE)
          $(ps | awk '{print $1}' | grep -q $PID) && \
-         $($ERROR "Already running. Exiting." ; exit 1) || \
-         $(echo $$ > $PIDFILE || $ERROR "Could not create PID file. Exiting." ; exit 1)
+         $($ERROR "Already running. Exiting." && exit 1) || \
+         $(echo $$ > $PIDFILE || $ERROR "Could not create PID file. Exiting." && exit 1)
   ;;
-  "false") $(echo $$ > $PIDFILE) || $($ERROR "Could not create PID file. Exiting." ; exit 1)
+  "false") $(echo $$ > $PIDFILE) || $($ERROR "Could not create PID file. Exiting." && exit 1)
   ;;
 esac
 
