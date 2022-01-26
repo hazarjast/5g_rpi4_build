@@ -55,6 +55,7 @@ if ! $(grep -q 'modemwatcher' $PSCONF)
 then
 [ -f /etc/config/pservice ] && cp -p $PSCONF $PSCONF.bak
 cat << EOF >> $PSCONF
+
 config pservice
         option name 'modemwatcher'
         option respawn_maxfail 0
