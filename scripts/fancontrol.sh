@@ -130,7 +130,7 @@ do
     continue
   else
     $INFO "Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting."
-    exit 1
+    terminate
   fi
 done &
 }
