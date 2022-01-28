@@ -3,18 +3,21 @@
 #
 # *Script info*
 # Watch Modem status under ModemManager to ensure it stays connected to the Internet.
-# If connectivity is lost, cycle ModemManager and bring the modem interface up
+# When connectivity is lost, cycle the modem interface and recheck connectivity.
+# If cycling the interface does not restore connectivity, cycle ModemManager.
 #
 # *Assumptions*
 # Script to be used for a single ModemManager modem defined as $LIFACE in uci.
 # Package 'pservice' should be installed and used to run this as a daemon.
+# NOTE: At first run this script will add this script to 'pservice' config.
 #
 # *Required Inputs*
-# $PINGDST, $WAIT - Domains to ping, how long to wait for ModemManager.
-# $LIFACE - Logical (uci) name of the modem interface.
+# $PINGDST, $LIFACE - Domains to ping, logical (uci) name of the modem interface.
 #
 # *Dependencies*
-# This script requires 'modemmanager', 'pservice', and 'pkill' packages.
+# This script requires 'modemmanager' and 'pservice' packages.
+#
+#
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
 #
@@ -23,19 +26,16 @@
 #
 
 PINGDST="google.com cloudflare.com"
-WAIT=10
 LIFACE="WWAN"
 PIFACE=$(ubus -v call network.interface.$LIFACE status | egrep -o 'l3_device.*' | tr -d "l3_device: \|\"\,")
 PIDFILE=/var/run/modem_watcher.pid
+WATCHPID="/var/run/modem_logread.pid"
+LOOPPID="/var/run/modem_loop.pid"
 INFO="/usr/bin/logger -t MODEM_WATCHER"
 ERROR="/usr/bin/logger -p err -t MODEM_WATCHER"
-LOGSTRNG="state changed (connected ->"
-MMCLI="/usr/bin/mmcli"
+DISCONNECT="state changed (connected ->"
+RECONNECT="state changed (registered -> connected"
 MMDMN="/etc/init.d/modemmanager"
-MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
-BINDEX="$($MMCLI -m $MINDEX -K | egrep -o 'bearers\.value.*' | egrep -o '/org/freedesktop/.*')"
-MSTATUS=/tmp/modem.status
-BSTATUS=/tmp/bearer.status
 
 # Preliminary logic to ensure this only runs one instance at a time
 [ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
@@ -51,7 +51,7 @@ esac
 
 # Sets up this script as a 'pservice' daemon if it's not already
 PSCONF=/etc/config/pservice
-if ! $(grep -q 'modemwatcher' $PSCONF) 
+if ! $(grep -q 'modemwatcher' $PSCONF)
 then
 [ -f /etc/config/pservice ] && cp -p $PSCONF $PSCONF.bak
 cat << EOF >> $PSCONF
@@ -87,84 +87,72 @@ do
 done
 }
 
+# Watch the system log for modem status change
+watch() {
+if [ -f $PIDFILE ]
+then
+  (logread -f & echo $! > $WATCHPID;) | \
+  (grep -q "$1" && kill $(cat $WATCHPID) && rm $WATCHPID;)
+  [ "$1" = "$DISCONNECT" ] && [ -f $LOOPPID ] && check
+fi
+}
+
 # Checks for connectivity with 'pinger' and exits early if found
 # Restarts ModemManager if no connectivity is found
-connect() {
-  case "$RE" in
-    1) $INFO "Waiting $WAIT seconds for modem activity to finish before checking connection."
-      sleep $WAIT ; pinger
-      if [ $CONNECTED -eq 1 ]
-      then
-          $INFO "Modem is connected to the internet."
-      else
-         $INFO "Cannot reach internet. Cycling ModemManager and bringing $LIFACE up."
-          $MMDMN stop && sleep 2 && $MMDMN start
-          sleep $WAIT
-          ifup $LIFACE
-      fi
-    ;;
-    0) $INFO "Cycling ModemManager and bringing $LIFACE up."
-      $MMDMN && sleep 2 && $MMDMN start
-      sleep $WAIT
-      ifup $LIFACE
-    ;;
-  esac
-}
-
-# Check for modem index presence and check/connect if not found
-# If modem index exists, grep for concerning status indicators
 check() {
-  $INFO "Modem check script is running."
-  if [ -z $MINDEX ]
-  then
-    RE=1 ; connect
-  else
-    $MMCLI -m "$MINDEX" > $MSTATUS
-    echo $BINDEX > $BSTATUS
-    STATUS=$(grep -o 'disabled\|idle\|connected\|searching\|registered' $MSTATUS)
-  fi
+$INFO "Modem left connected state."
 
-  # Logic gate for actioning returned modem status
-  # If modem is disabled or idle, connect
-  # If modem is connected/searching/registered, check and 'RE'connect
-  case "$STATUS" in
-    "disabled") $INFO "Modem is disabled; connecting." && RE=0 && connect
-    ;;
-    "idle") $INFO "Modem is idle; connecting." && RE=0 && connect
-    ;;
-    "connected") $INFO "Modem is connected; checking connectivity." && RE=1 && connect
-    ;;
-    "searching") $INFO "Modem is searching; checking connectivity." && RE=1 && connect
-    ;;
-    "registered") $INFO "Modem is registered; checking connectivity." && RE=1 && connect
-     ;;
-  esac
-  $INFO "Sleeping until next state change."
-}
+pinger
 
-# Watch the system log for modem status change
-watcher() {
-  $INFO "Modem watcher initialized!"
-  logread -f | while read line
-  do
-    if [ "${line#*$LOGSTRNG*}" != "$line" ]
+if [ $CONNECTED -eq 1 ]
+then
+  $INFO "Modem is connected to the internet."
+else
+  $INFO "Cannot reach internet. Cycling $LIFACE."
+  ifup $LIFACE
+  watch $RECONNECT
+  $INFO "Waiting 10 seconds for interface to come online."
+  sleep 10
+  pinger
+    if [ $CONNECTED -eq 1 ]
     then
-      check
+      $INFO "Modem is connected to the internet."
+    else
+      $INFO "Cannot reach internet. Cycling ModemManager."
+      $MMDMN stop && sleep 2 && $MMDMN start
+      watch $RECONNECT
+      $INFO "Waiting 10 seconds for interface to come online."
+      sleep 10
+      pinger
+        if [ $CONNECTED -eq 1 ]
+        then
+          $INFO "Modem is connected to the internet."
+        else
+          $ERROR "Could not restore modem internet connectivity."
+        fi
     fi
-  done &
+fi
 }
 
 # Cleanup $PIDFILE and kill watcher loop when daemon is stopped
 # Required for use w/ 'pservice' since it doesn't stop descendants
 terminate() {
-  PID=$(cat $PIDFILE)
-  rm -f $PIDFILE
-  $INFO "Modem watcher killed!"
-  pkill -P $PID
+CHILD=$(cat $WATCHPID)
+LOOP=$(cat $LOOPPID)
+PARENT=$(cat $PIDFILE)
+rm -f $WATCHPID $PIDFILE $LOOPPID
+$INFO "Modem watcher killed!"
+kill $CHILD $LOOP $PARENT
 }
+
+$INFO "Modem watcher initialized!"
 
 trap terminate SIGHUP SIGINT SIGQUIT SIGTERM
 
-watcher
+while true
+do
+  watch "$DISCONNECT"
+  $INFO "Sleeping until next modem state change."
+done & echo $! > $LOOPPID
 
 wait
