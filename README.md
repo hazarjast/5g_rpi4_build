@@ -2,7 +2,7 @@
 Repository of all information related to my Raspberry Pi4 5G PoE modem build
 
 ## Design Philosophy & Guiding Principles
-The goal of this project is can be summed up as follows: Build a capable, stable, low maintenance, cost-concious 5G WAN solution using well-supported hardware/software components which can be installed outdoors and preserve its longevity by incorporating adequate thermal controls into the design. A checklist of guiding principles in no particular order:
+The goal of this project is can be summed up as follows: Build a capable, stable, low maintenance, cost-concious 5G WAN solution using well-supported hardware/software components which can be installed outdoors and preserve hardware longevity by incorporating adequate thermal controls into the design. A checklist of guiding principles in no particular order:
 
 * Select quality hardware and parts which are inexpensive but well supported
 * Choose base software components which are stable and well documented
