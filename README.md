@@ -95,27 +95,6 @@ The goal of this project is can be summed up as follows: Build a capable, stable
   * Accepts fully terminated Ethernet (RJ45)
   * 8.5mm NPT 
 
-## Hardware Build
-### Vent, Fan, and Wire Gland Install
-Since this will be going outside in the Midwestern US it is going to get hot and humid during some seasons so, in order to control heat and humidity, we will be installing two vents on the front door of the enclosure. The bottom will be a cold air intake and the top will be a hot air exhaust (since hot air rises). I chose the IPV-1116 vents because they are completed covered on 3 out of 4 sides and have a grid with small holes for air to pass through. The hole size required for the vents is kind of odd at 3.46". Luckily this worked out to exactly 88mm and by searching for that I was able to source one online. Even though the vents have a pretty small grid for air ingress/egress, sometimes we get foggy/misty weather in the Summer and Fall so I wanted to hedge my bets against any droplets being pulled in by the fans by installing metal mesh PC fan filters on the inside of the vents between them and the fan. The wire gland install is not pictured here but it's just a simple 1/2" spade bit drilled into the bottom with some sanding so the threads slide in easy; then just tighten the locknut on from the inside.
-
-<table >
-	<tbody>
-		<tr>
-			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5377.jpg" width="200" height="200" /></td>
-			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5378.jpg" width="200" height="200" /></td>
-			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5379.jpg" width="200" height="200" /></td>
-			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5380.jpg" width="200" height="200" /></td>
-		</tr>
-		<tr>
-			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5381.jpg" width="200" height="200" /></td>
-			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5422.jpg" width="200" height="200" /></td>
-			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5421.jpg" width="200" height="200" /></td>
-			<td align= "center"><a href="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5396.MOV">Fan Test Video</a></td>
-		</tr>
-	</tbody>
-</table>
-
 ### Important Component Selection Information
 #### Quectel RM502Q-AE
 The star of our project. Provides all the niceties that a modem with the Qualcomm SDX55 chipset can provide including NR SA/NSA/CA with M.2 Key B connector and choice of USB 3.0 or PCIe interfaces and both QMI (default) or MBIM raw-IP protocol support. Supports all available carrier low and mid bands for LTE and NR. No mmWave here but, since I don't live in a downtown/metro area, I won't be seeing any mmWave here any time soon (or ever, really). For power requirements she runs on 5v with a draw of up to 3a at peak load. Operating temperature range is from -30c to +70c.
@@ -137,6 +116,27 @@ Yes, 5G will some day possibly provide over 1Gbps speeds in my area but at this 
 
 #### Buck Converter (DC voltage step-down regulator)
 This little guy takes 9-36v DC input through bare wire or a barrel connector (we are supplying it with 12v@2.5a from the PoE splitter) and outputs 5v through USB and/or bare wire connectors at up to 6a. This is perfect for us and fits within the power budget which the other components will draw (Modem@3a + RPi@1.8a + Hub@0.1a + Fans@0.8a = 5.7a max). The connectors are also great because we can use the bare wire connectors to split out power to the modem EVB and RPi while connecting the power-only end of our USB 2.0 Y-cable to the USB connecor which will provide the supplemental power we need for our hub-connected fans.
+
+## Hardware Build
+### Vent, Fan, and Wire Gland Install
+Since this will be going outside in the Midwestern US it is going to get hot and humid during some seasons so, in order to control heat and humidity, we will be installing two vents on the front door of the enclosure. The bottom will be a cold air intake and the top will be a hot air exhaust (since hot air rises). I chose the IPV-1116 vents because they are completed covered on 3 out of 4 sides and have a grid with small holes for air to pass through. The hole size required for the vents is kind of odd at 3.46". Luckily this worked out to exactly 88mm and by searching for that I was able to source one online. Even though the vents have a pretty small grid for air ingress/egress, sometimes we get foggy/misty weather in the Summer and Fall so I wanted to hedge my bets against any droplets being pulled in by the fans by installing metal mesh PC fan filters on the inside of the vents between them and the fan. The wire gland install is not pictured here but it's just a simple 1/2" spade bit drilled into the bottom with some sanding so the threads slide in easy; then just tighten the locknut on from the inside.
+
+<table >
+	<tbody>
+		<tr>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5377.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5378.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5379.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5380.jpg" width="200" height="200" /></td>
+		</tr>
+		<tr>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5381.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5422.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5421.jpg" width="200" height="200" /></td>
+			<td align= "center"><a href="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5396.MOV">Fan Test Video</a></td>
+		</tr>
+	</tbody>
+</table>
 
 ### Mounting the Components
 #### Overall Layout and Mounting the PoE Splitter
