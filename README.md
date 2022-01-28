@@ -81,13 +81,22 @@ The goal of this project is can be summed up as follows: Build a capable, stable
 ### Vent and Fan Install
 Since this will be going outside in the Midwestern US it is going to get hot and humid during some seasons so, in order to control heat and humidity, we will be installing two vents on the front door of the enclosure. The bottom will be a cold air intake and the top will be a hot air exhaust (since hot air rises). I chose the IPV-1116 vents because they are completed covered on 3 out of 4 sides and have a grid with small holes for air to pass through. The hole size required for the vents is kind of odd at 3.46". Luckily this worked out to exactly 88mm and by searching for that I was able to source one online. Even though the vents have a pretty small grid for air ingress/egress, sometimes we get foggy/misty weather in the Summer and Fall so I wanted to hedge my bets against any droplets being pulled in by the fans by installing metal mesh PC fan filters on the inside of the vents between them and the fan.
 
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5377.jpg" width="200" height="200" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5378.jpg" width="200" height="200" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5379.jpg" width="200" height="200" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5380.jpg" width="200" height="200" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5381.jpg" width="200" height="200" />
-
-
+<table >
+	<tbody>
+		<tr>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5377.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5378.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5379.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5380.jpg" width="200" height="200" /></td>
+		</tr>
+		<tr>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5381.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5422.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5421.jpg" width="200" height="200" /></td>
+			<td align= "center"><a href="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5396.MOV">Fan Test Video</a></td>
+		</tr>
+	</tbody>
+</table>
 
 ## Historical Background
 ### Let's start at the beginning...
