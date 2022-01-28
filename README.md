@@ -76,6 +76,11 @@ The goal of this project is can be summed up as follows: Build a capable, stable
 * **Wago LEVER-NUTS**
   * 3-Conductor
   * 24-12 AWG 
+* **Terminated Ethernet Wire Gland - Gray Nylon**
+  * Heyco, 'Heyco-Tite' Liquid Tight Cordgrip
+  * Part #s: M3201GBH (gland), 8464 (locknut)
+  * Accepts fully terminated Ethernet (RJ45)
+  * 8.5mm NPT 
 
 ## Hardware Build
 ### Vent and Fan Install
