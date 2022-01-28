@@ -190,7 +190,7 @@ Once the main components were mounted to the mounting plate the next step was co
 		<tr>
 			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5419.jpg" width="200" height="200" /></td>
 			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5420.jpg" width="200" height="200" /></td>
-			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5423.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/5g_modem_wiring.png" width="200" height="200" /></td>
 			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5440.jpg" width="200" height="200" /></td>
 		</tr>
 	</tbody>
