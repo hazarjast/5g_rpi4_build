@@ -1,6 +1,16 @@
 # 5G RPi 4 PoE Modem Build
 Repository of all information related to my Raspberry Pi4 5G PoE modem build
 
+## Design Philosophy & Guiding Principles
+The goal of this project is can be summed up as follows: Build a capable, stable, low maintenance, cost-concious 5G WAN solution using well-supported hardware/software components which can be installed outdoors and preserve its longevity by incorporating adequate thermal controls into the design. A checklist of guiding principles in no particular order:
+
+* Select quality hardware and parts which are inexpensive but well supported
+* Choose base software components which are stable and well documented
+* Utilize pre-compiled, stable software packages wherever possible
+* Assemble hardware & configure software in a way which reduces or eliminates human intervention
+* Sufficiently document the build and configuration process so others can produce the same end results
+
+
 ## Parts List
 * **Quectel RM502Q-AE**
   * Supports all current LTE and NR low and mid-spectrum bands by US carriers (no mmWave)
