@@ -59,6 +59,13 @@ Repository of all information related to my Raspberry Pi4 5G PoE modem build
 * **320pc Nylon Standoff/Screw/Washer Kit**
   * Assorted lengths
   * M3 size
-* **Assorted Length UV-safe Zip-Ties**
-  * Smaller diameter ones used to attach some components to IP enclosure mounting plate
-  * Larger ones used for cable management
+* **Outdoor-grade Zip Cable Ties (2 sizes)**
+  * 10cm length, 18LB loop tensile strength (100ct)
+  * 20cm length, 50LB loop tensile strength (100ct)
+  * Withstands a temperature range of -40-85c
+* **Wago LEVER-NUTS**
+  * 3-Conductor
+  * 24-12 AWG 
+
+## Hardware Build
+### Vent and Fan Install
