@@ -31,6 +31,8 @@ The goal of this project is can be summed up as follows: Build a capable, stable
   * Physical dimensions: 100x21mm
 * **Raspberry Pi 4B**
   * 4GB SKU
+* **Class 10 MicroSD Card**
+  * 32GB (simply because it was cheap)
 * **RPi 4 Heatsink Kit**
   * Self-adhesive 3M tape
 * **IP67 Outdoor Project Box**
@@ -51,6 +53,9 @@ The goal of this project is can be summed up as follows: Build a capable, stable
 * **USB 2.0 'Y' cable**
   * 1x Male USB-A Data+Power
   * 2x Female USB-A (1x Power only, 1x Data+Power)
+* **USB 2.0, 4-port Hub***
+  * D-Link DUB-H4 (HW. Rev. "D")
+  * Provides PPPS (Per Port Power Switching)
 * **18AWG DC Power Cables**
   * 5.5x2.1mm 
   * Male+Female pairs (6x)
@@ -75,7 +80,15 @@ The goal of this project is can be summed up as follows: Build a capable, stable
   * Withstands a temperature range of -40-85c
 * **Wago LEVER-NUTS**
   * 3-Conductor
-  * 24-12 AWG 
+  * 24-12 AWG
+* **1' USB-C to USB-A cable**
+  * Connects modem EVB to RPi USB 3.0
+* **6" USB-C PD to DC cable**
+  * Connects buck converter to RPi power
+* **6" DC Male to DC Male**
+  * Connects buck converter to modem EVB
+* **1' Cat6 Ethernet Cable**
+  * Connects PoE Splitter to RPi NIC
 * **Terminated Ethernet Wire Gland - Gray Nylon**
   * Heyco, 'Heyco-Tite' Liquid Tight Cordgrip
   * Part #s: M3201GBH (gland), 8464 (locknut)
@@ -83,8 +96,8 @@ The goal of this project is can be summed up as follows: Build a capable, stable
   * 8.5mm NPT 
 
 ## Hardware Build
-### Vent and Fan Install
-Since this will be going outside in the Midwestern US it is going to get hot and humid during some seasons so, in order to control heat and humidity, we will be installing two vents on the front door of the enclosure. The bottom will be a cold air intake and the top will be a hot air exhaust (since hot air rises). I chose the IPV-1116 vents because they are completed covered on 3 out of 4 sides and have a grid with small holes for air to pass through. The hole size required for the vents is kind of odd at 3.46". Luckily this worked out to exactly 88mm and by searching for that I was able to source one online. Even though the vents have a pretty small grid for air ingress/egress, sometimes we get foggy/misty weather in the Summer and Fall so I wanted to hedge my bets against any droplets being pulled in by the fans by installing metal mesh PC fan filters on the inside of the vents between them and the fan.
+### Vent, Fan, and Wire Gland Install
+Since this will be going outside in the Midwestern US it is going to get hot and humid during some seasons so, in order to control heat and humidity, we will be installing two vents on the front door of the enclosure. The bottom will be a cold air intake and the top will be a hot air exhaust (since hot air rises). I chose the IPV-1116 vents because they are completed covered on 3 out of 4 sides and have a grid with small holes for air to pass through. The hole size required for the vents is kind of odd at 3.46". Luckily this worked out to exactly 88mm and by searching for that I was able to source one online. Even though the vents have a pretty small grid for air ingress/egress, sometimes we get foggy/misty weather in the Summer and Fall so I wanted to hedge my bets against any droplets being pulled in by the fans by installing metal mesh PC fan filters on the inside of the vents between them and the fan. The wire gland install is not pictured here but it's just a simple 1/2" spade bit drilled into the bottom with some sanding so the threads slide in easy; then just tighten the locknut on from the inside.
 
 <table >
 	<tbody>
@@ -102,6 +115,45 @@ Since this will be going outside in the Midwestern US it is going to get hot and
 		</tr>
 	</tbody>
 </table>
+
+### Important Component Selection Information
+#### Quectel RM502Q-AE
+The star of our project. Provides all the niceties that a modem with the Qualcomm SDX55 chipset can provide including NR SA/NSA/CA with M.2 Key B connector and choice of USB 3.0 or PCIe interfaces and both QMI (default) or MBIM raw-IP protocol support. Supports all available carrier low and mid bands for LTE and NR. No mmWave here but, since I don't live in a downtown/metro area, I won't be seeing any mmWave here any time soon (or ever, really). For power requirements she runs on 5v with a draw of up to 3a at peak load. Operating temperature range is from -30c to +70c.
+
+#### 5G M.2 to USB 3.0 Evaluation Board (EVB)
+There are a ton of different M.2 to USB 3.0 adapters that exist but most do not have Key B M.2 slots and are designed for SSDs and not modem interfaces (USB). Many of the ones that are Key B have very basic power circuitry, many delivering even below the 900ma USB 3.0 spec current. Obviously this is a huge problem for a modem that can draw up to 3a at peak. For this reason a USB adapter (a.k.a. "USB Sled") that offers supplemntal DC power input is a necessity. There are a few out there with one of the best in the industry sold by The Wireless Haven. However, when procuring the RM502Q-AE I came across this EVB which featured dual nano SIM slots along with a USB-C data connector in addition to accepting 5v DC supplement voltage. The supplement voltage input is also controlled by a toggle switch which can be handy. So, I picked this one up for those compelling reasons.
+
+#### Raspberry Pi 4B, 4GB
+I selected the RPi 4B for it's USB 3.0 ports and 1Gbps NIC. The 4GB of RAM is completely overkill for our project but due to supply chain issues it was the only SKU I could get my hands on at the moment. If you can find the 2GB for less, then that would be more than adequate as well. Power is also 5v via USB-C connector and draw is up to 1.8a when we do not factor in connected USB peripheral draw. Per specification the USB 2.0 ports deliver a maximum of 500ma per port and the USB 3.0 ports deliver a maximum of 900ma per port. It is also worth noting that the RPi USB ports are ganged together for power. Because of these limitations, we will need a a USB hub which supports Per Port Power Switching (PPPS) and also a way to supplement additional amperage to support our fans (I will touch on this more below).
+
+#### D-Link DUB-H4 (HW. Rev. "D")
+Since the RPi's USB ports are ganged for power, turning them on/off programatically is an "all or nothing" affair which doesn't work for us since we obviously still need the USB 3.0 interface available at all times for the modem. Thus we need to connect the fans to a separate hub which supports Per Port Power Switching (PPPS) that will be used to turn them on/off. There are PPPS hubs made specifically for the RPi like the Uugear MEGA4 but those aren't stocked in the US so with overseas shipping can be a bit pricey compared to other options. Because of this, I searched out and found this specific model D-Link on ye olde eBay which was a cheaper option. There are not many USB hubs which ship with the hardware components required for PPPS so it's important we select one which is confirmed to have it. The hub connects via MiniUSB to USB-A and draws only about 100ma before any peripherals are connected. It comes with an AC adapter (5v 2.5a) which we won't need for our use case.
+
+#### 80mm USB PC Fans (2x)
+To keep things cool I added 2, 80mm USB (5v) PC fans to the vents that were installed in the enclosure (one for cold air ingress, one for hot air exhaust). These will be programatically controlled through the USB hub and each draw 400ma max.
+
+#### Gigabit PoE Splitter
+Yes, 5G will some day possibly provide over 1Gbps speeds in my area but at this point it is about 200Mbps which is far more than enough for my needs. That and the fact that routing traffic of that speed through the RPi would require a USB 2.5Gbps+ NIC and special config (over-clock, jumbo frames, etc.), made it easy for me to settle on 1Gbps for the interface. The RPi already features a native 1Gbps port and there are plenty of Gigabit 802.3 standards compliant PoE injectors and splitters on the market already. This particular unit was chosen since it will output 30w albeit at the 12v setting only (12v@2.5a). Which finally brings us to the need for a buck converter...
+
+#### Buck Converter (DC voltage step-down regulator)
+This little guy takes 9-36v DC input through bare wire or a barrel connector (we are supplying it with 12v@2.5a from the PoE splitter) and outputs 5v through USB and/or bare wire connectors at up to 6a. This is perfect for us and fits within the power budget which the other components will draw (Modem@3a + RPi@1.8a + Hub@0.1a + Fans@0.8a = 5.7a max). The connectors are also great because we can use the bare wire connectors to split out power to the modem EVB and RPi while connecting the power-only end of our USB 2.0 Y-cable to the USB connecor which will provide the supplemental power we need for our hub-connected fans.
+
+### Mounting the Components
+#### Overall Layout and Mounting the PoE Splitter
+This part took some trial and error to figure out how to securely attach all the major components to the plastic mounting plate of the enclosure in such a tight space. The PoE splitter already had nice mounting holes and doesn't get that hot so I left it's cover on. Basically oriented things in a way so that cables could be routed under or around all components to keep them low and out of the way of the fan blades when the enclosure door is closed. I also checked to ensure that, when installed in the case, there would be no issues inserting or removing cables from their ports (didn't want anything too close to each other or the sides for this reason). I mounted the PoE splitter first by threading the smaller cable ties in through the mounting holes, all the way through the plastic mounting plate coming back up through the plate through an adjacent square before threading the zip tie into itself and closing the loop tightly to secure it in place. I did this on all 4 corners.
+
+#### Buck Converter
+Next came the buck converter (DC voltage step down regulator). Mounting this one was fun because there were no mounting holes and the underside of the mounting plate where I wanted to place this had a raised plastic edge so I had to adjust the placement down slightly to where there was a break in the plastic edge to get pulled down good and tight. Word of warning here to be extra careful and ensure the zip ties are away from the solid capacitors. Luckily these converters came in a two pack because on the first one I pulled too hard and the zip tie slipped and sheared one of the capacitors right off the board, lol. Needles to say there was lots of cursing involved as I cut it loose and installed the second one more carefully. Once this was secured, I used the provided DC barrel connector cable to connect the PoE splitter to the converter and secured the excess wire with a couple additional cable ties.
+
+#### Raspberry Pi
+The RPi was next to be mounted but width-wise where I needed to place it there was not enough room to place it without the port connectors butting up against the buck converter. So, I followed the motto of "If you can't scale out, scale up" and used some of the medium sized M3 nylon standoffs from the assorted M3 size kit making sure their screwed in position on the panel lined up with the mounting holes on the RPi PCB. I used the corresponding sized nylon nuts to secure the standoffs from the back side of the mounting panel. I did not bother with the power cabling yet as I needed to place the modem EVB in place first to get an idea of the best way to route all the power cables from there.
+
+#### Modem EVB
+Mounting the modem EVB was an interesting challenge since it only had two holes drilled on one side of the PCB with power and data connectors on the other, far side with no other holes to be found. The nylon washers in the standoff kit saved the day. I was able to position 5 of the tallest standoffs strategically along the edge of the PCB where I then used two of the nylon washers with the shortest nylon screw to "sandwich" and grip the PCB in between the two washers at each standoff. The standoffs themselves were secured from the back of the mounting plate with nylon nuts (same as the RPi). This setup secured the EVB very well without any play at all. This 'pinching' washer setup on the standoffs was positioned in a way which provided the best support while leaving the SIM slots unobstructed.
+
+## Connecting the Power
+
+
 
 ## Historical Background
 ### Let's start at the beginning...
