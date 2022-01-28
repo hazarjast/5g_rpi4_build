@@ -164,8 +164,8 @@ Mounting the modem EVB was an interesting challenge since it only had two holes 
 </table>
 
 
-## Connecting the Power
-
+## Connections and Cabling
+Once the main components were mounted to the mounting plate the next step was connecting everything up and routing the wires. I began with what was already mounted to the mounting plate, starting with the bare wire connector output on the buck converter. Since the package of DC Male and Female connectors I bought had excess wire, I was able to clip them shorter and use the additional lengths of wire to distribute the power from the converter to the Lever Nuts. From the Lever Nuts, I connected two female DC connectors; one of these connected to the male-DC-to-USB-C to power the RPi, the other connected to the male-DC-to-male-DC cable to power the modem EVB. The lengths of wire between the converter and Lever Nuts, and from the Lever Nuts to the female DC connectors were all cut to appropriate lengths and neatly routed underneath the EVB and RPi. They were then secured through the mounting plate with the smaller zip ties to keep them stationary and ensure no contact was made with any of the solder joints underneath the RPi (where the male and female DC connectors were joined.
 
 <table >
 	<tbody>
