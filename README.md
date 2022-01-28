@@ -167,6 +167,35 @@ Mounting the modem EVB was an interesting challenge since it only had two holes 
 ## Connecting the Power
 
 
+<table >
+	<tbody>
+		<tr>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5385.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5386.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5387.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5388.jpg" width="200" height="200" /></td>
+		</tr>
+		<tr>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5389.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5390.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5391.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5392.jpg" width="200" height="200" /></td>
+		</tr>
+		<tr>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5393.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5394.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5413.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/RenderedImage.jpg" width="200" height="200" /></td>
+		</tr>
+		<tr>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5419.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5420.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5423.jpg" width="200" height="200" /></td>
+			<td><img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/IMG_5440.jpg" width="200" height="200" /></td>
+		</tr>
+	</tbody>
+</table>
+
 
 ## Historical Background
 ### Let's start at the beginning...
