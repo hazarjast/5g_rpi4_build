@@ -227,11 +227,11 @@ The starting point for this build was of course RTFM (reading the 'fine' manual)
 
 In OPNSense I found the DHCP lease IP of the booted RPi but quickly came to know that the RPi folks do not have SSH daemon enabled by default so I had to power the RPi off, remove the SD card, mount it on my Ubuntu laptop, mount the '/boot' filesystem from the SD card, and 'touch ssh' there (creating an empty file called 'ssh'). Once this was done I was able to re-insert the SD card into the RPi and it allowed me to SSH into it from there. I then ran 'raspi-config' and chose the option to update 'raspi-config' to ensure I had the latest version. Once 'raspi-config' was updated I set the WiFi country code as recommended by the OpenWRT wiki and set the 'raspi-config' 'Advanced' settings from 'default' relase to 'latest'. This allowed me to get the latest eeprom update via the following commands:
 
-*sudo rpi-eeprom-update*
-*sudo rpi-eeprom-update -a'
-*sudo reboot*
+`sudo rpi-eeprom-update`
+`sudo rpi-eeprom-update -a`
+`sudo reboot`
 
-After the reboot I ran *sudo rpi-eeprom-update* once more to make sure it updated to the latest stable version (it did). I was ready then to flash OpenWRT.
+After the reboot I ran `sudo rpi-eeprom-update` once more to make sure it updated to the latest stable version (it did). I was ready then to flash OpenWRT.
 
 ### OpenWRT Install and Initial Configuration
 After powering off the RPi ('sudo shutdown -now'), I removed the microSD card and placed it in my Windows PC again to flash the latest stable image downloaded here: https://downloads.openwrt.org/releases/21.02.1/targets/bcm27xx/bcm2711/openwrt-21.02.1-bcm27xx-bcm2711-rpi-4-ext4-factory.img.gz . Using 7-zip I extracted the .img file and flash it to SD using the same Balena Etcher program as before. We chose the ext4 image over squashfs since space is not a concern (using a 32GB SD card in this case). The ext4 image may wear down the SD storage quicker but considering OpenWRT active logging is all done in RAM and SD cards are cheap to me working with ext4 is worth this trade-off. Especially if we need to expand the root filesystem later for more software package storage etc. Extending the overlay filesystem via extroot under squashfs is a much bigger pain in the butt, IMHO. If ext4 is good enough for the many diverse deployments of RPi OS, then it is good enough for OpenWRT in my book :)
@@ -284,11 +284,39 @@ We can then go back into the web interface to configure the newly added device a
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h18_00.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h18_50.png" />
 
-### ownload All Required Packages
-Now that the RPi has Internet access via our temporary WAN, go back to the Putty SSH prompt and issue the follow commands to update the software package lists and install the packatges we need:
+### Install All Required Packages
+Now that the RPi has Internet access via our temporary WAN, go back to the Putty SSH prompt and issue the follow commands to update the software package lists and install the packatges we need (there are actually more package which will be installed but they will be installed automatically as dependecies for the packages listed below):
 
 `opkg update`
+`opkg install usbutils kmod-usb-net-qmi-wwan kmod-usb-serial-option luci-proto-modemmanager uhubctl socat coreutils-timeout iptables-mod-ipopt pservice procps-ng-pkill`
+`reboot`
 
+### Configure Modem Interface & Remove Temp UsB WAN
+Once packages are installed and OpenWRT has been rebooted, log back into the web interface to configure the modem interface (I have called mine 'WWAN'):
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h39_30.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h40_28.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h41_10.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h41_47.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h42_12.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-11_16h37_11.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-11_16h42_03.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-11_16h42_03.png" />
+
+### Add Custom Firewall Rules
+It will be necessary to add custom firewall rules ('Network > Firewall > Custom Rules') if you are using a SIM provisioned to a plan that differntiates on-device data from hotspot data, else you will exhaust the hotspot bucket and be left with greatly throttled speeds in some cases:
+
+`# IPv4 TTL mod
+iptables -w -t mangle -C POSTROUTING -o wwan0 -j TTL --ttl-set 65 > /dev/null 2>&1 || \
+iptables -w -t mangle -I POSTROUTING 1 -o wwan0 -j TTL --ttl-set 65
+
+# IPv6 TTL mod (prevents leaks not covered by IPv4 rules)
+ip6tables -w -t mangle -C POSTROUTING -o wwan0 -j HL --hl-set 65 > /dev/null 2>&1 || \
+ip6tables -w -t mangle -I POSTROUTING 1 -o wwan0 -j HL --hl-set 65
+`
+
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-15_12h16_28.png" />
+
+If you modem device is not 'wwan0' updated it accordingly in the rules.
 
 ## Historical Background
 ### Let's start at the beginning...
