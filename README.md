@@ -1,6 +1,50 @@
 # 5G RPi 4 PoE Modem Build
 Repository of all information related to my Raspberry Pi4 5G PoE modem build
 
+- [Table of Contents](#5g-rpi-4-poe-modem-build)
+  * [Design Philosophy & Guiding Principles](#design-philosophy--guiding-principles)
+  * [Parts List](#parts-list)
+  * [Important Component Selection Information](#important-component-selection-information)
+    + [Quectel RM502Q-AE](#quectel-rm502q-ae)
+    + [5G M.2 to USB 3.0 Evaluation Board (EVB)](#5g-m2-to-usb-30-evaluation-board-evb)
+    + [Raspberry Pi 4B, 4GB](#raspberry-pi-4b-4gb)
+    + [D-Link DUB-H4 (HW. Rev. "D")](#d-link-dub-h4-hw-rev-d)
+    + [80mm USB PC Fans (2x)](#80mm-usb-pc-fans-2x)
+    + [Gigabit PoE Splitter](#gigabit-poe-splitter)
+    + [Buck Converter (DC voltage step-down regulator)](#buck-converter-dc-voltage-step-down-regulator)
+    + [PCB Antennas](#pcb-antennas)
+  * [Hardware Build](#hardware-build)
+    + [Vent, Fan, and Wire Gland Install](#vent-fan-and-wire-gland-install)
+    + [Mounting the Core Components](#mounting-the-core-components)
+      - [Overall Layout and Mounting the PoE Splitter](#overall-layout-and-mounting-the-poe-splitter)
+      - [Buck Converter](#buck-converter)
+      - [Raspberry Pi](#raspberry-pi)
+      - [Modem EVB](#modem-evb)
+    + [Connections and Cabling](#connections-and-cabling)
+      - [Power Cables](#power-cables)
+      - [Voltage Validation](#voltage-validation)
+      - [USB and Ethernet Connections](#usb-and-ethernet-connections)
+      - [PCB Antennas](#pcb-antennas-1)
+  * [Software Build](#software-build)
+    + [Operating System Selection](#operating-system-selection)
+    + [OpenWRT Pre-installation Prep](#openwrt-pre-installation-prep)
+    + [OpenWRT Install and Initial Configuration](#openwrt-install-and-initial-configuration)
+    + [Temporary Creation of a USB WAN](#temporary-creation-of-a-usb-wan)
+    + [Install All Required Packages](#install-all-required-packages)
+    + [Configure Modem Interface & Remove Temp USB WAN](#configure-modem-interface--remove-temp-usb-wan)
+    + [Add Custom Firewall Rules](#add-custom-firewall-rules)
+  * [Historical Background](#historical-background)
+    + [Let's start at the beginning...](#lets-start-at-the-beginning)
+    + [Android Stuck to the Wall](#android-stuck-to-the-wall)
+    + [My Very First Netgear](#my-very-first-netgear)
+    + [Inexpensive Sierra Modem](#inexpensive-sierra-modem)
+    + [The Birth of ROOter](#the-birth-of-rooter)
+    + [Useless IP-Passthrough and a Solution](#useless-ip-passthrough-and-a-solution)
+    + [ROOter w/ Sierra EM7455 and 'The Need for Speed'](#rooter-w-sierra-em7455-and-the-need-for-speed)
+    + [Rethinking antennas and Modem Placement](#rethinking-antennas-and-modem-placement)
+    + [Netgear Love-Affair Continues](#netgear-love-affair-continues)
+    + [The Push to 5G](#the-push-to-5g)
+
 ## Design Philosophy & Guiding Principles
 The goal of this project is can be summed up as follows: Build a capable, stable, low maintenance, cost-concious 5G WAN solution using well-supported hardware/software components which can be installed outdoors and preserve hardware longevity by incorporating adequate thermal controls into the design. A checklist of guiding principles in no particular order:
 
@@ -293,7 +337,7 @@ Now that the RPi has Internet access via our temporary WAN, go back to the Putty
 
 `reboot`
 
-### Configure Modem Interface & Remove Temp UsB WAN
+### Configure Modem Interface & Remove Temp USB WAN
 Once packages are installed and OpenWRT has been rebooted, log back into the web interface to configure the modem interface (I have called mine 'WWAN'):
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h39_30.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h40_28.png" />
