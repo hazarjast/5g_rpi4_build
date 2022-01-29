@@ -271,9 +271,11 @@ The starting point for this build was of course RTFM (reading the 'fine' manual)
 
 In OPNSense I found the DHCP lease IP of the booted RPi but quickly came to know that the RPi folks do not have SSH daemon enabled by default so I had to power the RPi off, remove the SD card, mount it on my Ubuntu laptop, mount the '/boot' filesystem from the SD card, and 'touch ssh' there (creating an empty file called 'ssh'). Once this was done I was able to re-insert the SD card into the RPi and it allowed me to SSH into it from there. I then ran 'raspi-config' and chose the option to update 'raspi-config' to ensure I had the latest version. Once 'raspi-config' was updated I set the WiFi country code as recommended by the OpenWRT wiki and set the 'raspi-config' 'Advanced' settings from 'default' relase to 'latest'. This allowed me to get the latest eeprom update via the following commands:
 
-`sudo rpi-eeprom-update`
-`sudo rpi-eeprom-update -a`
-`sudo reboot`
+```bash
+sudo rpi-eeprom-update
+sudo rpi-eeprom-update -a
+sudo reboot
+```
 
 After the reboot I ran `sudo rpi-eeprom-update` once more to make sure it updated to the latest stable version (it did). I was ready then to flash OpenWRT.
 
@@ -329,11 +331,11 @@ We can then go back into the web interface to configure the newly added device a
 ### Install All Required Packages
 Now that the RPi has Internet access via our temporary WAN, go back to the Putty SSH prompt and issue the follow commands to update the software package lists and install the packatges we need (there are actually more package which will be installed but they will be installed automatically as dependecies for the packages listed below):
 
-`opkg update`
-
-`opkg install usbutils kmod-usb-net-qmi-wwan kmod-usb-serial-option luci-proto-modemmanager uhubctl socat coreutils-timeout iptables-mod-ipopt pservice procps-ng-pkill`
-
-`reboot`
+```bash
+opkg update
+opkg install usbutils kmod-usb-net-qmi-wwan kmod-usb-serial-option luci-proto-modemmanager uhubctl socat coreutils-timeout iptables-mod-ipopt pservice procps-ng-pkill
+reboot
+```
 
 ### Configure Modem Interface & Remove Temp USB WAN
 Once packages are installed and OpenWRT has been rebooted, log back into the web interface to configure the modem interface (I have called mine 'WWAN'):
@@ -348,13 +350,15 @@ Once packages are installed and OpenWRT has been rebooted, log back into the web
 ### Add Custom Firewall Rules
 It will be necessary to add custom firewall rules ('Network > Firewall > Custom Rules') if you are using a SIM provisioned to a plan that differntiates on-device data from hotspot data, else you will exhaust the hotspot bucket and be left with greatly throttled speeds in some cases:
 
-`iptables -w -t mangle -C POSTROUTING -o wwan0 -j TTL --ttl-set 65 > /dev/null 2>&1 || \`
+```bash
+#IPv4 TTL mod
+iptables -w -t mangle -C POSTROUTING -o wwan0 -j TTL --ttl-set 65 > /dev/null 2>&1 || \
+iptables -w -t mangle -I POSTROUTING 1 -o wwan0 -j TTL --ttl-set 65
 
-`iptables -w -t mangle -I POSTROUTING 1 -o wwan0 -j TTL --ttl-set 65`
-
-`ip6tables -w -t mangle -C POSTROUTING -o wwan0 -j HL --hl-set 65 > /dev/null 2>&1 || \`
-
-`ip6tables -w -t mangle -I POSTROUTING 1 -o wwan0 -j HL --hl-set 65`
+#IPv6 TTL mod (prevents leaks not covered by IPv4 rules)
+ip6tables -w -t mangle -C POSTROUTING -o wwan0 -j HL --hl-set 65 > /dev/null 2>&1 || \
+ip6tables -w -t mangle -I POSTROUTING 1 -o wwan0 -j HL --hl-set 65`
+```
 
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-15_12h16_28.png" />
 
