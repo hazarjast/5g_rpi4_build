@@ -307,9 +307,9 @@ Once packages are installed and OpenWRT has been rebooted, log back into the web
 ### Add Custom Firewall Rules
 It will be necessary to add custom firewall rules ('Network > Firewall > Custom Rules') if you are using a SIM provisioned to a plan that differntiates on-device data from hotspot data, else you will exhaust the hotspot bucket and be left with greatly throttled speeds in some cases:
 
-`iptables -w -t mangle -C POSTROUTING -o wwan0 -j TTL --ttl-set 65 > /dev/null 2>&1 || \'
+`iptables -w -t mangle -C POSTROUTING -o wwan0 -j TTL --ttl-set 65 > /dev/null 2>&1 || \`
 
-'iptables -w -t mangle -I POSTROUTING 1 -o wwan0 -j TTL --ttl-set 65'
+`iptables -w -t mangle -I POSTROUTING 1 -o wwan0 -j TTL --ttl-set 65`
 
 `ip6tables -w -t mangle -C POSTROUTING -o wwan0 -j HL --hl-set 65 > /dev/null 2>&1 || \`
 
