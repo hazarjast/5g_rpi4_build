@@ -53,6 +53,9 @@ The goal of this project is can be summed up as follows: Build a capable, stable
 * **USB 2.0 'Y' cable**
   * 1x Male USB-A Data+Power
   * 2x Female USB-A (1x Power only, 1x Data+Power)
+* **USB Network Adapter**
+  * Chipset should be supported by OpenWRT
+  * Will only be used temporarily to download modem packages
 * **USB 2.0, 4-port Hub***
   * D-Link DUB-H4 (HW. Rev. "D")
   * Provides PPPS (Per Port Power Switching)
@@ -236,7 +239,55 @@ After powering off the RPi ('sudo shutdown -now'), I removed the microSD card an
 Once the SD card was replaced I disconnected it from my existing LAN and connected it directly to my test bench PC (since the default OpenWRT is 192.168.1.1 it would conflict with any existing LAN using that subnet). Once booted up, we login to the web interface to set the root password:
 
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h39_15.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h39_30.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h39_50.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h40_00.png" />
 
+Given the default IP will conflict with many existing routers running on 192.168.1.1 it will be best to change this as well:
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h40_58.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_12.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_32.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_47.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_58.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h43_25.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h45_07.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_47.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h45_24.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_11h21_12.png" />
+
+### Temporary Creation of a USB WAN
+First hurdle to get over was the fact that RPi only has one Ethernet port and I needed that to stay configured as LAN for LuCI (web gui) and SSH access. One could move forward in one of three ways:
+
+1. Determine all *.ipk packages and dependencies needed to run a Quectel modem and download them all for offline installation (extremely painful).
+2. Setup VLANs with a switch supporting 802.11q  (https://openwrt.org/docs/guide-user/network/vlan/managed_switch)
+3. Plug in a USB network adapter (physical 'eth1') to assign as WAN.
+
+Option one is very unrealistic and I have pity for whoever chooses this one. VLANs are nice and probably even better to consider using going forward but all my managed switches are currently being used so I went for option three since I had a Trendnet USB 3.0 Ethernet adapter lying around unused. Only downside to this was that it had an Asix chipset which wasn't supported out of the box. Good news was that it only needed a handful of kmod packages installed to get it working (downloaded them on my workbench PC over wifi and then transferred them to the RPi via WinSCP (if your adapter has a different chipset you'll likely need different packages for this part but this should give an idea of what to look for):
+
+https://downloads.openwrt.org/releases/21.02.1/targets/bcm27xx/bcm2711/packages/kmod-libphy_5.4.154-1_aarch64_cortex-a72.ipk
+https://downloads.openwrt.org/releases/21.02.1/targets/bcm27xx/bcm2711/packages/kmod-mii_5.4.154-1_aarch64_cortex-a72.ipk
+https://downloads.openwrt.org/releases/21.02.1/targets/bcm27xx/bcm2711/packages/kmod-usb-net_5.4.154-1_aarch64_cortex-a72.ipk
+https://downloads.openwrt.org/releases/21.02.1/targets/bcm27xx/bcm2711/packages/kmod-usb-net-asix-ax88179_5.4.154-1_aarch64_cortex-a72.ipk
+
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h11_52.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h12_01.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h12_48.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h12_48.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h14_49.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h14_49.png" />
+
+We can then go back into the web interface to configure the newly added device as our temporary WAN interface (you should have your USB adapted to your existing LAN now so it will have access to the Internet once connected):
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h16_19.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h16_27.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h16_59.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h17_34.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h18_00.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h18_50.png" />
+
+### ownload All Required Packages
+Now that the RPi has Internet access via our temporary WAN, go back to the Putty SSH prompt and issue the follow commands to update the software package lists and install the packatges we need:
+
+`opkg update`
 
 
 ## Historical Background
