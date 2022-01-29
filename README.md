@@ -316,8 +316,6 @@ https://downloads.openwrt.org/releases/21.02.1/targets/bcm27xx/bcm2711/packages/
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h11_52.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h12_01.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h12_48.png" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h12_48.png" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h14_49.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_14h14_49.png" />
 
 We can then go back into the web interface to configure the newly added device as our temporary WAN interface (you should have your USB adapted to your existing LAN now so it will have access to the Internet once connected):
@@ -345,7 +343,6 @@ Once packages are installed and OpenWRT has been rebooted, log back into the web
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h41_47.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h42_12.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-11_16h37_11.png" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-11_16h42_03.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-11_16h42_03.png" />
 
 ### Add Custom Firewall Rules
