@@ -95,29 +95,29 @@ The goal of this project is can be summed up as follows: Build a capable, stable
   * Accepts fully terminated Ethernet (RJ45)
   * 8.5mm NPT 
 
-### Important Component Selection Information
-#### Quectel RM502Q-AE
+## Important Component Selection Information
+### Quectel RM502Q-AE
 The star of our project. Provides all the niceties that a modem with the Qualcomm SDX55 chipset can provide including NR SA/NSA/CA with M.2 Key B connector and choice of USB 3.0 or PCIe interfaces and both QMI (default) or MBIM raw-IP protocol support. Supports all available carrier low and mid bands for LTE and NR. No mmWave here but, since I don't live in a downtown/metro area, I won't be seeing any mmWave here any time soon (or ever, really). For power requirements she runs on 5v with a draw of up to 3a at peak load. Operating temperature range is from -30c to +70c.
 
-#### 5G M.2 to USB 3.0 Evaluation Board (EVB)
+### 5G M.2 to USB 3.0 Evaluation Board (EVB)
 There are a ton of different M.2 to USB 3.0 adapters that exist but most do not have Key B M.2 slots and are designed for SSDs and not modem interfaces (USB). Many of the ones that are Key B have very basic power circuitry, many delivering even below the 900ma USB 3.0 spec current. Obviously this is a huge problem for a modem that can draw up to 3a at peak. For this reason a USB adapter (a.k.a. "USB Sled") that offers supplemntal DC power input is a necessity. There are a few out there with one of the best in the industry sold by The Wireless Haven. However, when procuring the RM502Q-AE I came across this EVB which featured dual nano SIM slots along with a USB-C data connector in addition to accepting 5v DC supplement voltage. The supplement voltage input is also controlled by a toggle switch which can be handy. So, I picked this one up for those compelling reasons.
 
-#### Raspberry Pi 4B, 4GB
+### Raspberry Pi 4B, 4GB
 I selected the RPi 4B for it's USB 3.0 ports and 1Gbps NIC. The 4GB of RAM is completely overkill for our project but due to supply chain issues it was the only SKU I could get my hands on at the moment. If you can find the 2GB for less, then that would be more than adequate as well. Power is also 5v via USB-C connector and draw is up to 1.8a when we do not factor in connected USB peripheral draw. Per specification the USB 2.0 ports deliver a maximum of 500ma per port and the USB 3.0 ports deliver a maximum of 900ma per port. It is also worth noting that the RPi USB ports are ganged together for power. Because of these limitations, we will need a a USB hub which supports Per Port Power Switching (PPPS) and also a way to supplement additional amperage to support our fans (I will touch on this more below).
 
-#### D-Link DUB-H4 (HW. Rev. "D")
+### D-Link DUB-H4 (HW. Rev. "D")
 Since the RPi's USB ports are ganged for power, turning them on/off programatically is an "all or nothing" affair which doesn't work for us since we obviously still need the USB 3.0 interface available at all times for the modem. Thus we need to connect the fans to a separate hub which supports Per Port Power Switching (PPPS) that will be used to turn them on/off. There are PPPS hubs made specifically for the RPi like the Uugear MEGA4 but those aren't stocked in the US so with overseas shipping can be a bit pricey compared to other options. Because of this, I searched out and found this specific model D-Link on ye olde eBay which was a cheaper option. There are not many USB hubs which ship with the hardware components required for PPPS so it's important we select one which is confirmed to have it. The hub connects via MiniUSB to USB-A and draws only about 100ma before any peripherals are connected. It comes with an AC adapter (5v 2.5a) which we won't need for our use case.
 
-#### 80mm USB PC Fans (2x)
+### 80mm USB PC Fans (2x)
 To keep things cool I added 2, 80mm USB (5v) PC fans to the vents that were installed in the enclosure (one for cold air ingress, one for hot air exhaust). These will be programatically controlled through the USB hub and each draw 400ma max.
 
-#### Gigabit PoE Splitter
+### Gigabit PoE Splitter
 Yes, 5G will some day possibly provide over 1Gbps speeds in my area but at this point it is about 200Mbps which is far more than enough for my needs. That and the fact that routing traffic of that speed through the RPi would require a USB 2.5Gbps+ NIC and special config (over-clock, jumbo frames, etc.), made it easy for me to settle on 1Gbps for the interface. The RPi already features a native 1Gbps port and there are plenty of Gigabit 802.3 standards compliant PoE injectors and splitters on the market already. This particular unit was chosen since it will output 30w albeit at the 12v setting only (12v@2.5a). Which finally brings us to the need for a buck converter...
 
-#### Buck Converter (DC voltage step-down regulator)
+### Buck Converter (DC voltage step-down regulator)
 This little guy takes 9-36v DC input through bare wire or a barrel connector (we are supplying it with 12v@2.5a from the PoE splitter) and outputs 5v through USB and/or bare wire connectors at up to 6a. This is perfect for us and fits within the power budget which the other components will draw (Modem@3a + RPi@1.8a + Hub@0.1a + Fans@0.8a = 5.7a max). The connectors are also great because we can use the bare wire connectors to split out power to the modem EVB and RPi while connecting the power-only end of our USB 2.0 Y-cable to the USB connecor which will provide the supplemental power we need for our hub-connected fans.
 
-#### PCB Antennas
+### PCB Antennas
 Since I have a cell tower less than two miles away from me with generally good line-of-sight access, I opted to go for some 12dBi omnidirectional PCB antennas to mount inside the outdoor enclosure with the rest of the components. If you are further from a tower, purchasing some IPEX4/MHF4 to N-type or SMA pigtails which econnect to exteneral directional antennas may be a better choice.
 
 ## Hardware Build
@@ -212,6 +212,31 @@ The 4x PCB antennas were mounted equal distances apart on either side of the cas
 		</tr>
 	</tbody>
 </table>
+
+## Software Build
+### Operating System Selection
+I decided to go with the latest stable OpenWRT (21.02.1) and ModemManager (1.16.6) for this build. I have been following the ModemManager port to OpenWRT for awhile and from the reports I read it seemed this combo was now generally quite reliable. As much as I and many others enjoy and benefit from having used ROOter in previous builds I do feel it can be a bit slow and bloated at times with odd errors from the litany of interconnected scripts which sometimes only a reboot will solve. Since ROOter maintains such a wide modem/router compatibility and continues to receive many feature enhancements from its large and active community, it is not immune to the increasing overhead and complexity that go hand-in-hand with this.
+
+ROOter is certainly the "swiss army knife" of cellular WAN builds but for this build I really wanted to stick with something purpose-built and as close to stock OpenWRT as possible. Especially because I'm not looking for something to perform advanced routing, firewalling, VPN brokering, or DNS filtering capabilities as I already have pfSense/OPNSense with WireGuard and NextDNS running on much more capable hardware to handle these duties. I much prefer a modular approach to network design with a general outlook that can be summarized by the belief that a "Jack of all trades is master of none." So, in this case, we will let our 5G modem host be a modem host and not bog it down with much else.
+
+### OpenWRT Pre-installation Prep
+The starting point for this build was of course RTFM (reading the 'fine' manual). In this case OpenWRT already has a nice wiki page for the family of RPi devices: https://openwrt.org/toh/raspberry_pi_foundation/raspberry_pi . Here I learned that it is recommended to first load Raspberry Pi OS to perform selection of WiFi country code (in case for some reason we wish to use the WiFi for something later on), and flash the latest eeprom update from the inbuilt 'rpi-eeprom-update' utility for best compatibility. From my Windows 10 PC I downloaded the latest RPi OS Lite image (https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2022-01-28/2022-01-28-raspios-bullseye-armhf-lite.zip) and flashed it to microSD using Balena Etcher. Once that was done I inserted the card into the RPi and connected the power to my PoE injector to power everything up. I connected the Ethernet data connection from the injector to my existing LAN so that I could hopefully just SSH into it after it booted.
+
+In OPNSense I found the DHCP lease IP of the booted RPi but quickly came to know that the RPi folks do not have SSH daemon enabled by default so I had to power the RPi off, remove the SD card, mount it on my Ubuntu laptop, mount the '/boot' filesystem from the SD card, and 'touch ssh' there (creating an empty file called 'ssh'). Once this was done I was able to re-insert the SD card into the RPi and it allowed me to SSH into it from there. I then ran 'raspi-config' and chose the option to update 'raspi-config' to ensure I had the latest version. Once 'raspi-config' was updated I set the WiFi country code as recommended by the OpenWRT wiki and set the 'raspi-config' 'Advanced' settings from 'default' relase to 'latest'. This allowed me to get the latest eeprom update via the following commands:
+
+*sudo rpi-eeprom-update*
+*sudo rpi-eeprom-update -a'
+*sudo reboot*
+
+After the reboot I ran *sudo rpi-eeprom-update* once more to make sure it updated to the latest stable version (it did). I was ready then to flash OpenWRT.
+
+### OpenWRT Install and Initial Configuration
+After powering off the RPi ('sudo shutdown -now'), I removed the microSD card and placed it in my Windows PC again to flash the latest stable image downloaded here: https://downloads.openwrt.org/releases/21.02.1/targets/bcm27xx/bcm2711/openwrt-21.02.1-bcm27xx-bcm2711-rpi-4-ext4-factory.img.gz . Using 7-zip I extracted the .img file and flash it to SD using the same Balena Etcher program as before. We chose the ext4 image over squashfs since space is not a concern (using a 32GB SD card in this case). The ext4 image may wear down the SD storage quicker but considering OpenWRT active logging is all done in RAM and SD cards are cheap to me working with ext4 is worth this trade-off. Especially if we need to expand the root filesystem later for more software package storage etc. Extending the overlay filesystem via extroot under squashfs is a much bigger pain in the butt, IMHO. If ext4 is good enough for the many diverse deployments of RPi OS, then it is good enough for OpenWRT in my book :)
+
+Once the SD card was replaced I disconnected it from my existing LAN and connected it directly to my test bench PC (since the default OpenWRT is 192.168.1.1 it would conflict with any existing LAN using that subnet). Once booted up, we login to the web interface to set the root password:
+
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h39_15.png" />
+
 
 
 ## Historical Background
