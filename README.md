@@ -288,7 +288,9 @@ We can then go back into the web interface to configure the newly added device a
 Now that the RPi has Internet access via our temporary WAN, go back to the Putty SSH prompt and issue the follow commands to update the software package lists and install the packatges we need (there are actually more package which will be installed but they will be installed automatically as dependecies for the packages listed below):
 
 `opkg update`
+
 `opkg install usbutils kmod-usb-net-qmi-wwan kmod-usb-serial-option luci-proto-modemmanager uhubctl socat coreutils-timeout iptables-mod-ipopt pservice procps-ng-pkill`
+
 `reboot`
 
 ### Configure Modem Interface & Remove Temp UsB WAN
@@ -305,18 +307,17 @@ Once packages are installed and OpenWRT has been rebooted, log back into the web
 ### Add Custom Firewall Rules
 It will be necessary to add custom firewall rules ('Network > Firewall > Custom Rules') if you are using a SIM provisioned to a plan that differntiates on-device data from hotspot data, else you will exhaust the hotspot bucket and be left with greatly throttled speeds in some cases:
 
-`# IPv4 TTL mod
-iptables -w -t mangle -C POSTROUTING -o wwan0 -j TTL --ttl-set 65 > /dev/null 2>&1 || \
-iptables -w -t mangle -I POSTROUTING 1 -o wwan0 -j TTL --ttl-set 65
+`iptables -w -t mangle -C POSTROUTING -o wwan0 -j TTL --ttl-set 65 > /dev/null 2>&1 || \'
+'iptables -w -t mangle -I POSTROUTING 1 -o wwan0 -j TTL --ttl-set 65'
 
-# IPv6 TTL mod (prevents leaks not covered by IPv4 rules)
-ip6tables -w -t mangle -C POSTROUTING -o wwan0 -j HL --hl-set 65 > /dev/null 2>&1 || \
-ip6tables -w -t mangle -I POSTROUTING 1 -o wwan0 -j HL --hl-set 65
+`ip6tables -w -t mangle -C POSTROUTING -o wwan0 -j HL --hl-set 65 > /dev/null 2>&1 || \`
+`ip6tables -w -t mangle -I POSTROUTING 1 -o wwan0 -j HL --hl-set 65`
 `
 
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-15_12h16_28.png" />
 
 If you modem device is not 'wwan0' updated it accordingly in the rules.
+
 
 ## Historical Background
 ### Let's start at the beginning...
