@@ -60,7 +60,7 @@ The goal of this project can be summed up as follows: Build a capable, stable, l
   * Supports all current LTE and NR low and mid-spectrum bands by US carriers (no mmWave)
   * SDX55 chipset supporting NR SA, NR CA (FDD+FDD, TDD+TDD), NSA (LTE+NR), and VoLTE
   * M.2 Key B connection supporting USB 3.x and PCIe w/ IPEX4/MHF4 antenna connectors
-* **Copper Heatsink**
+* **Copper Modem Heatsink**
   * Phyiscal dimensions: 40x26x4mm
 * **M.2 to USB 3.0 Evaluation Board**
   * "5G M.2 TO USB3.0-KIT PRO"
@@ -88,20 +88,21 @@ The goal of this project can be summed up as follows: Build a capable, stable, l
   * Physical dimensions 100x96x65.5mm
   * Hole dimension diameter: 88mm
 * **88mm Hole Saw**
-  * Stainless Steel
+  * Steel alloy
 * **80mm PC Fan (x2)**
   * USB powered (5v)
 * **80mm PC Fan Filter Grills (x2)**
   * Aluminum frame
   * Fine Stainless Steel mesh
 * **USB 2.0 'Y' cable**
-  * 1x Male USB-A Data+Power
-  * 2x Female USB-A (1x Power only, 1x Data+Power)
+  * 1x female USB-A Data+Power
+  * 2x Male USB-A (1x Power only, 1x Data+Power)
 * **USB Network Adapter**
-  * Chipset should be supported by OpenWRT
+  * Chipset should be supported by OpenWRT (Asix in this case)
   * Will only be used temporarily to download modem packages
 * **USB 2.0, 4-port Hub***
   * D-Link DUB-H4 (HW. Rev. "D")
+  * Small, square, black version
   * Provides PPPS (Per Port Power Switching)
 * **18AWG DC Power Cables**
   * 5.5x2.1mm 
@@ -139,24 +140,24 @@ The goal of this project can be summed up as follows: Build a capable, stable, l
 * **Terminated Ethernet Wire Gland - Gray Nylon**
   * Heyco, 'Heyco-Tite' Liquid Tight Cordgrip
   * Part #s: M3201GBH (gland), 8464 (locknut)
-  * Accepts fully terminated Ethernet (RJ45)
+  * Accepts pre-terminated Ethernet (RJ45)
   * 8.5mm NPT 
 
 ## Important Component Selection Information
 ### Quectel RM502Q-AE
-The star of our project. Provides all the niceties that a modem with the Qualcomm SDX55 chipset can provide including NR SA/NSA/CA with M.2 Key B connector and choice of USB 3.0 or PCIe interfaces and both QMI (default) or MBIM raw-IP protocol support. Supports all available carrier low and mid bands for LTE and NR. No mmWave here but, since I don't live in a downtown/metro area, I won't be seeing any mmWave here any time soon (or ever, really). For power requirements she runs on 5v with a draw of up to 3a at peak load. Operating temperature range is from -30c to +70c.
+The star of our project. Provides all the niceties that a modem with the Qualcomm SDX55 chipset should provide including NR SA/NSA/CA with M.2 Key B connector and choice of USB 3.0 or PCIe interfaces and both QMI (default) or MBIM raw-IP protocol support. Supports all available carrier low and mid bands for LTE and NR. No mmWave here but, since I don't live in a downtown/metro area, I won't be seeing any mmWave here any time soon (or ever, really). For power requirements she runs on 5v with a draw of up to 3a at peak load. Operating temperature range is from -30c to +70c.
 
 ### 5G M.2 to USB 3.0 Evaluation Board (EVB)
-There are a ton of different M.2 to USB 3.0 adapters that exist but most do not have Key B M.2 slots and are designed for SSDs and not modem interfaces (USB). Many of the ones that are Key B have very basic power circuitry, many delivering even below the 900ma USB 3.0 spec current. Obviously this is a huge problem for a modem that can draw up to 3a at peak. For this reason a USB adapter (a.k.a. "USB Sled") that offers supplemntal DC power input is a necessity. There are a few out there with one of the best in the industry sold by The Wireless Haven. However, when procuring the RM502Q-AE I came across this EVB which featured dual nano SIM slots along with a USB-C data connector in addition to accepting 5v DC supplement voltage. The supplement voltage input is also controlled by a toggle switch which can be handy. So, I picked this one up for those compelling reasons.
+There are a ton of different M.2 to USB 3.0 adapters that exist but most do not have Key B, M.2 slots and are designed for SSDs and not modem interfaces (USB). Many of the ones that are Key B have very basic power circuitry, many delivering even below the 900ma USB 3.0 spec current. Obviously this is a huge problem for a modem that can draw up to 3a at peak. For this reason a USB adapter (a.k.a. "USB Sled") that offers supplemntal DC power input is a necessity. There are a few out there with one of the best in the industry sold by The Wireless Haven (prev. "LTE Fix"). However, when procuring the RM502Q-AE I came across this EVB which featured dual nano SIM slots along with a USB-C data connector in addition to accepting 5v DC supplement voltage. The supplement voltage input is also controlled by a toggle switch which can be handy. So, I picked this one up for those compelling reasons.
 
 ### Raspberry Pi 4B, 4GB
-I selected the RPi 4B for it's USB 3.0 ports and 1Gbps NIC. The 4GB of RAM is completely overkill for our project but due to supply chain issues it was the only SKU I could get my hands on at the moment. If you can find the 2GB for less, then that would be more than adequate as well. Power is also 5v via USB-C connector and draw is up to 1.8a when we do not factor in connected USB peripheral draw. Per specification the USB 2.0 ports deliver a maximum of 500ma per port and the USB 3.0 ports deliver a maximum of 900ma per port. It is also worth noting that the RPi USB ports are ganged together for power. Because of these limitations, we will need a a USB hub which supports Per Port Power Switching (PPPS) and also a way to supplement additional amperage to support our fans (I will touch on this more below).
+I selected the RPi 4B for it's USB 3.0 ports and 1Gbps NIC. The 4GB of RAM is completely overkill for our project but due to supply chain issues it was the only SKU I could get my hands on at the moment. If you can find the 2GB for a lower cost, then that would be more than adequate as well. Power is also 5v via USB-C connector and draw is up to 1.8a when we do not factor in connected USB peripheral draw. Per specification the USB 2.0 ports deliver a maximum of 500ma per port and the USB 3.0 ports deliver a maximum of 900ma per port. It is also worth noting that the RPi USB ports are ganged together for power. Because of these limitations, we will need a a USB hub which supports Per Port Power Switching (PPPS) and also a way to supplement additional amperage to support our fans (I will touch on this more below).
 
 ### D-Link DUB-H4 (HW. Rev. "D")
-Since the RPi's USB ports are ganged for power, turning them on/off programatically is an "all or nothing" affair which doesn't work for us since we obviously still need the USB 3.0 interface available at all times for the modem. Thus we need to connect the fans to a separate hub which supports Per Port Power Switching (PPPS) that will be used to turn them on/off. There are PPPS hubs made specifically for the RPi like the Uugear MEGA4 but those aren't stocked in the US so with overseas shipping can be a bit pricey compared to other options. Because of this, I searched out and found this specific model D-Link on ye olde eBay which was a cheaper option. There are not many USB hubs which ship with the hardware components required for PPPS so it's important we select one which is confirmed to have it. The hub connects via MiniUSB to USB-A and draws only about 100ma before any peripherals are connected. It comes with an AC adapter (5v 2.5a) which we won't need for our use case.
+For this project we will be using the 'uhubctl' software package which toggles USB port power to the fans on/off programatically. Since the RPi's USB ports are ganged for power, turning them on/off programatically is an "all or nothing" affair which doesn't work for us since we obviously still need the USB 3.0 interface available at all times for the modem. Thus we need to connect the fans to a separate hub which supports Per Port Power Switching (PPPS) that will be used by 'uhubctl' to turn them on/off. There are PPPS hubs made specifically for the RPi like the Uugear MEGA4 but those aren't stocked in the US so with overseas shipping can be a bit pricey compared to other options. Because of this, I searched out and found this specific model D-Link on ye olde eBay which was a cheaper option, shipped. There are not many USB hubs which leave the factory with the hardware components required for PPPS (eliminating them in the final design saves OEMs money) so it's important we select one which is confirmed to have it. The 'uhubctl' github page provides a handy list of known-working hubs here: https://github.com/mvp/uhubctl#compatible-usb-hubs. Our D-Link hub connects via MiniUSB to USB-A and draws only about 100ma before any peripherals are connected. It comes with an AC adapter (5v 2.5a) which we won't need for our use case.
 
 ### 80mm USB PC Fans (2x)
-To keep things cool I added 2, 80mm USB (5v) PC fans to the vents that were installed in the enclosure (one for cold air ingress, one for hot air exhaust). These will be programatically controlled through the USB hub and each draw 400ma max.
+To keep things cool I added 2, 80mm USB (5v) PC fans to the vents that were installed in the enclosure (one for cold air ingress, one for hot air exhaust). These will be programatically controlled through the USB hub and each draw 400ma max. Mounting screws were included.
 
 ### Gigabit PoE Splitter
 Yes, 5G will some day possibly provide over 1Gbps speeds in my area but at this point it is about 200Mbps which is far more than enough for my needs. That and the fact that routing traffic of that speed through the RPi would require a USB 2.5Gbps+ NIC and special config (over-clock, jumbo frames, etc.), made it easy for me to settle on 1Gbps for the interface. The RPi already features a native 1Gbps port and there are plenty of Gigabit 802.3 standards compliant PoE injectors and splitters on the market already. This particular unit was chosen since it will output 30w albeit at the 12v setting only (12v@2.5a). Which finally brings us to the need for a buck converter...
@@ -169,9 +170,9 @@ Since I have a cell tower less than two miles away from me with generally good l
 
 ## Hardware Build
 ### Vent, Fan, and Wire Gland Install
-Since this will be going outside in the Midwestern US it is going to get hot and humid during some seasons so, in order to control heat and humidity, we will be installing two vents on the front door of the enclosure. The bottom will be a cold air intake and the top will be a hot air exhaust (since hot air rises). I chose the IPV-1116 vents because they are completed covered on 3 out of 4 sides and have a grid with small holes for air to pass through. The hole size required for the vents is kind of odd at 3.46". Luckily this worked out to exactly 88mm and by searching for that I was able to source one online.
+Since this will be going outside in the Midwestern US it is going to get hot and humid during some seasons so, in order to control heat and humidity, we will be installing two vents on the front door of the enclosure. The bottom will be a cold air intake and the top will be a hot air exhaust (since hot air rises). I chose the IPV-1116 vents because they are completely covered on 3 out of 4 sides and have a grid with small holes for air to pass through. The hole size required for the vents is kind of odd at 3.46". Luckily this worked out to exactly 88mm and by searching for the metric meausrement I was able to source one online.
 
-The fans installed easily since they came with screws and the vents had the necessary screw holes already. When installing the fans it was important to check they were installed correctly so that the bottom fan drew air in and the top fan blew air out. Luckily the fans had clear labels on the edges which indicated the direction of airflow. Even though the vents have a pretty small grid for air ingress/egress, sometimes we get foggy/misty weather in the Summer and Fall so I wanted to hedge my bets against any droplets being pulled in by the fans by installing metal mesh PC fan filters on the inside of the vents between them and the fan. The wire gland install is not pictured here but it's just a simple 1/2" spade bit drilled into the bottom with some sanding so the threads slide in easy; then just tighten the locknut on from the inside.
+The fans installed easily since they came with screws and the vents had the necessary screw holes already. When installing the fans it was important to check they were installed correctly so that the bottom fan drew air in and the top fan blew air out. Luckily the fans had clear labels on the edges which indicated the direction of airflow. Even though the vents have a pretty small grid for air ingress/egress, sometimes we get foggy/misty weather in the Summer and Fall so I wanted to hedge my bets against any droplets being pulled in by the fans by installing metal mesh PC fan filters on the inside of the vents between them and the fan. The wire gland install is not pictured here but it's just a simple 1/2" spade bit drilled into the bottom of the enclosure with some sanding of the resulting hole so the threads slid in easy; then just needed to tighten the locknut on from the inside.
 
 <table >
 	<tbody>
