@@ -375,11 +375,14 @@ For this project we will need some scripts to achieve the goals we made at the o
 For daemonized scripts, we control them using the 'pservice' package. This is a very simple OpenWRT package which is a wrapper for shell scripts which should run as daemons. The reason to use this package to manage such scripts is that it saves us from having to create and maintain individual 'init.d' service defintions for each script. One downside is that 'pservice' does not handle child processes (descendants) which are launched from inside our script functions. Thus, our scripts must track any subshell processes created so that we can intercept signals on termination by 'pservice' (mostly 'SIGTERM') and end them prior to the main script ending so as not to leave orphan processes when stopping/starting/restarting 'pservice'. Final point to note is that 'pservice' start/stop controls all scripts together and not individually. If one wishes to control each script daemon individually then one would be encouraged to write proper service files for each one to be called by procd directly on boot.
 
 #### fancontrol.sh
-This script controls our case fans. It runs as a daemon under 'pservice' and checks the modem SoC temperature once per minute. If the temperature is over the defined limit threshold (55c by default), it will power on the fans. Once the modem has cooled below the limit, the fans are deactivated. Fan activation/deactivation by this script is logged to the system log; the history can be viewed with 'logread -e FAN_CONTROL'. Before running this script the following variables should be entered appropriately based on the PPPS USB hub one is using:
+This script controls our case fans. It runs as a daemon under 'pservice' and checks the modem SoC temperature once per minute. If the temperature is over the defined limit threshold (55c by default), it will power on the fans. Once the modem has cooled below the limit, the fans are deactivated. Fan activation/deactivation by this script is logged to the system log; the history can be viewed with 'logread -e FAN_CONTROL'. Before running this script the following variables should be entered appropriately:
 
 *$HUB, $PRODID* - Obtain w/ 'lsusb' and 'lsusb -v' ('idVendor:idProduct'; 'idVendor/idProduct/bcdDevice'). For $PRODID, ignore leading zeros in idVendor/idProduct and separating decimal in bcdDevice. Ex. 'idVendor 0x05e3, idProduct 0x0608, bcdDevice 60.52' = "5e3/608/6052".
+
 *$PORTS* - Populate with hub port numbers of connected fans using appropriate uhubctl syntax. Ex. '2-3' (ports two through three), '1,4 (ports one and four), etc.
+
 *$ATDEVICE, $MMVID, $MMPID, $MMUBIND* - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'. Ex. ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03".
+
 *$LIMIT, $INTERVAL* - Temperature threshold in degrees celsius when fans should be activated and time in seconds between polling modem temperature.
 
 #### modemwatcher.sh
@@ -391,6 +394,7 @@ This script watches the modem state for changes which could result in loss of In
 This is an interactive wrapper for the 'socat' utility which allows us to communicate easily with the modem's AT interface for sending commands and receiving return output (for scripts which interface with the AT port, we use 'socat' directly). On first run this script checks that the selected modem AT interface is unbound from ModemManager so we can use it. If this isn't the case, it creates the necessary 'udev' rule to unbind the interface and prompts the user to reboot for the change to take effect. Also, the script aliases itself as 'qcom' by creating a symlink in bin $PATH ('/usr/sbin/qcom') so that one can simply call it as 'qcom' from under any directory going forward. The following inputs should be entered appropriately prior to first run:
 
 *$CMD, $TIMEOUT* - AT command, timeout period before termindation (in seconds)
+
 *$ATDEVICE, $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...' Ex. $ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03".
 
 
