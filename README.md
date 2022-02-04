@@ -37,6 +37,7 @@ Repository of all information related to my Raspberry Pi4 5G PoE modem build
       - [fancontrol.sh](#fancontrolsh)
       - [modemwatcher.sh](#modemwatchersh)
       - [quickycom.sh](#quickycomsh)
+  * [ToDo List](#todo-list)
   * [Historical Background](#historical-background)
     + [Let's start at the beginning...](#lets-start-at-the-beginning)
     + [Android Stuck to the Wall](#android-stuck-to-the-wall)
@@ -399,6 +400,11 @@ This is an interactive wrapper for the 'socat' utility which allows us to commun
 
 *$ATDEVICE, $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...' Ex. $ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03".
 
+# ToDo List
+* 'DMZ' the modem interface (https://serverfault.com/questions/441257/how-to-configure-totally-open-dmz-with-openwrt)
+* Cover steps to perform a firmware upgrade on the modem (QFlash)
+* Look at adding 'sms-tool' (and 'luci-app-sms-tool') for SMS functionality
+* Cover band/cell locking; maybe add helper/watcher scripts for this
 
 
 ## Historical Background
