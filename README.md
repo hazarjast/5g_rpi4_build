@@ -31,6 +31,7 @@ Repository of all information related to my Raspberry Pi4 5G PoE modem build
     + [OpenWRT Install and Initial Configuration](#openwrt-install-and-initial-configuration)
     + [Temporary Creation of a USB WAN](#temporary-creation-of-a-usb-wan)
     + [Install All Required Packages](#install-all-required-packages)
+    + [Flash Modem Firmware Update](#flash-modem-firmware-update)
     + [Configure Modem Interface & Remove Temp USB WAN](#configure-modem-interface--remove-temp-usb-wan)
     + [Add Custom Firewall Rules](#add-custom-firewall-rules)
     + [Helper Scripts](#helper-scripts)
@@ -343,6 +344,39 @@ opkg install usbutils kmod-usb-net-qmi-wwan kmod-usb-serial-option luci-proto-mo
 reboot
 ```
 
+### Flash Modem Firmware Update
+It is usually a good idea to try and have the modem running on the latest available firmware as this generally includes bug fixes and other enhancements by the manufacturer. Here I will lay out the steps for flashing updated firmware under Windows (EVB should be connected to a PC via USB cable and power toggle should be set to USB power only). The firmware updates and their respective flash utilities can be obtained through the vendor you purchased the modem from, assuming they are reputable (shout out to Rich over at The Wireless Haven). In the case of Quectel modems, there are three items which are required to update the firmware: Drivers, QFlash utility, and the modem firmware update itself. Once you have downloaded archives for all three (usually .zip files) you should extract them then proceed as follows below.
+
+First we run the drivers installer executable as Adminstrator and let it finish:
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h02_40.png" />
+
+Next we will open Device Manager and expand the COM Ports, making specific note of the modem's DM port:
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h04_09.png" />
+
+From the extracted QFlash archive, we will move the 'release' folder to the root of C:\ (doesn't have to be this exact path but there are lots of spaces in the file path of our user's Download directory and the utility does not like spaces; thus easy enough to move to root drive letter for our usage):
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h07_34.png" />
+
+From the extracted firmware folder we will move the 'update' folder into the 'release' folder we just moved to the root of C:\:
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h07_50.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h08_19.png" />
+
+Now we will execute "QFlash.exe" as Administrator:
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h08_49.png" />
+
+Click on the "Load FW" button and select the "prog_firehose*.mbn" file from under the update folder which we moved under 'C:\Release':
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h10_46.png" />
+
+Set the COM port to the DM port we made note of in the Device Manager and baudrate to '4608006'. Make absolutely sure you've selected the correct DM COM port number!!!:
+
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h11_05.png" />
+
+Click 'Start' and allow the modem to update. This may take some minutes but will end with status message 'PASS':
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h12_49.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-08_16h14_13.png" />
+
+Once firmware is successfully flashed. Wait at least 30 seconds before disconnecting it from the PC and reconnecting it to the RPi to make sure all post-flash actions have completed.
+
+
 ### Configure Modem Interface & Remove Temp USB WAN
 Once packages are installed and OpenWRT has been rebooted, log back into the web interface to configure the modem interface (I have called mine 'WWAN'):
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h39_30.png" />
@@ -402,7 +436,6 @@ This is an interactive wrapper for the 'socat' utility which allows us to commun
 
 # ToDo List
 * 'DMZ' the modem interface (https://serverfault.com/questions/441257/how-to-configure-totally-open-dmz-with-openwrt)
-* Cover steps to perform a firmware upgrade on the modem (QFlash)
 * Look at adding 'sms-tool' (and 'luci-app-sms-tool') for SMS functionality
 * Cover band/cell locking; maybe add helper/watcher scripts for this
 
