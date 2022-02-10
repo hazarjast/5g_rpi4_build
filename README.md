@@ -39,6 +39,7 @@ Repository of all information related to my Raspberry Pi4 5G PoE modem build
       - [fancontrol.sh](#fancontrolsh)
       - [modemwatcher.sh](#modemwatchersh)
       - [quickycom.sh](#quickycomsh)
+  * [Results](#results)  
   * [ToDo List](#todo-list)
   * [Historical Background](#historical-background)
     + [Let's start at the beginning...](#lets-start-at-the-beginning)
@@ -454,6 +455,11 @@ This is an interactive wrapper for the 'socat' utility which allows us to commun
 **$CMD, $TIMEOUT** - AT command, timeout period before termindation (in seconds)
 
 **$ATDEVICE, $MMVID, $MMPID, $MMUBIND** - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...' Ex. $ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03".
+
+# Results
+My local tower offers only n71 SA which is not allocated much bandwidth at present so I am operating in NSA mode with a PCC of B2 or B4 aggregated with n41. The initilze results are a solid improvement over my previous average speeds on LTE only and ping is much improved. The device has so far only been tested indoors so I am excited to get it outside and up high to see what additional speed improvements I may achieve under those conditions.
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-10_13h34_53.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-09_13h16_47.png" />
 
 # ToDo List
 * Look at adding 'sms-tool' (and 'luci-app-sms-tool') for SMS functionality
