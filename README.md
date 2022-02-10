@@ -458,7 +458,9 @@ This is an interactive wrapper for the 'socat' utility which allows us to commun
 
 # Results
 My local tower offers only n71 SA which is not allocated much bandwidth at present so I am operating in NSA mode with a PCC of B2 or B4 aggregated with n41. The initilze results are a solid improvement over my previous average speeds on LTE only and ping is much improved. The device has so far only been tested indoors so I am excited to get it outside and up high to see what additional speed improvements I may achieve under those conditions.
+
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-10_13h34_53.png" />
+
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-09_13h16_47.png" />
 
 # ToDo List
