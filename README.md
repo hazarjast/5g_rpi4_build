@@ -1,5 +1,19 @@
 # 5G RPi 4 PoE Modem Build
-Repository of all information related to my Raspberry Pi4 5G PoE modem build
+Repository of all information related to my Raspberry Pi4 5G PoE modem build. If this project benefitted you in some way please consider supporting the other with a small donation below:
+
+ <table style="position:absolute; top:536px; left:10px;" border="0" cellspacing="0" cellpadding="0" align="center">
+      <tr>
+        <td align="center" width="128" height="80">
+          <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+            <input type="hidden" name="locale.x" value="en_US" />
+            <input type="hidden" name="cmd" value="_s-xclick" />
+            <input type="hidden" name="hosted_button_id" value="AB6H6ER4RWT74" />
+            <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+            <img alt="" border="0" src="https://www.paypal.com/en_LT/i/scr/pixel.gif" width="1" height="1" />
+          </form>
+        </td>
+      </tr>
+    </table>
 
 - [Table of Contents](#5g-rpi-4-poe-modem-build)
   * [Design Philosophy & Guiding Principles](#design-philosophy--guiding-principles)
