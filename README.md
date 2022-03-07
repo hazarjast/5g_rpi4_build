@@ -445,7 +445,7 @@ This script controls our case fans. On first run this script will add itself to 
 
 **$PORTS** - Populate with hub port numbers of connected fans using appropriate uhubctl syntax. Ex. '2-3' (ports two through three), '1,4 (ports one and four), etc.
 
-**$ATDEVICE, $MMVID, $MMPID, $MMUBIND** - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'. Ex. ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03".
+**$ATDEVICE, $MMVID, $MMPID, $MMUBIND** - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB2...AT primary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="02"...'. Ex. ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02".
 
 **$LIMIT, $INTERVAL** - Temperature threshold in degrees celsius when fans should be activated and time in seconds between polling modem temperature.
 
@@ -461,7 +461,7 @@ This is an interactive wrapper for the 'socat' utility which allows us to commun
 
 **$CMD, $TIMEOUT** - AT command, timeout period before termindation (in seconds)
 
-**$ATDEVICE, $MMVID, $MMPID, $MMUBIND** - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...' Ex. $ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03".
+**$ATDEVICE, $MMVID, $MMPID, $MMUBIND** - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB2...AT primary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="02"...' Ex. $ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02".
 
 # Results
 My local tower offers only n71 SA which is not allocated much bandwidth at present so I am operating in NSA mode with a PCC of B2 or B4 aggregated with n41. The initial results are a solid improvement over my previous average speeds on LTE only and ping is much improved. The device has so far only been tested indoors so I am excited to get it outside and up high to see what additional speed improvements I may achieve under those conditions.
