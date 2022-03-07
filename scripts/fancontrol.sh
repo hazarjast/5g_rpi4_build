@@ -5,14 +5,14 @@
 # Activate intake and exhaust fans if modem cpu temp exceeds $LIMIT.
 # Deactivate fans if modem cpu temp falls below $LIMIT.
 #
-# NOTE: A ModemManager udev rule is added at first run to unbind a secondary AT port for our use.
+# NOTE: A ModemManager udev rule is added at first run to unbind the primary AT port for our use.
 # User is then prompted to reboot OpenWRT for the change to take effect.
 # Be sure that $MMUBIND is populated with the correct MM USBIFNUM before running this script!
 #
 # *Assumptions*
 # Intended to be used with a USB hub which supports Per Port Power Switching (PPPS).
 # Specifically written for hosts with a modem managed by ModemManager.
-# Modem should be in a 'usbnet' mode which provides a secondary AT port:
+# Modem should be in a 'usbnet' mode which provides an AT port:
 # ex. RM502Q-AE in QMI mode
 # # Package 'pservice' should be installed and used to run this as a daemon.
 #
@@ -25,8 +25,8 @@
 # ex. '2-3' (ports two through three), '1,4 (ports one and four), etc.
 #
 # $ATDEVICE, $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules':
-# ex. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'
-# (ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03")
+# ex. '...ttyUSB2...AT primary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="02"...'
+# (ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02")
 #
 # $LIMIT - Temperature threshold in degrees celsius when fans should be activated.
 #
@@ -41,10 +41,10 @@
 HUB="05e3:0608"
 PRODID="5e3/608/6052"
 PORTS="3-4"
-ATDEVICE=/dev/ttyUSB3
+ATDEVICE=/dev/ttyUSB2
 MMVID="2c7c"
 MMPID="0800"
-MMUBIND="03"
+MMUBIND="02"
 LIMIT=55
 INTERVAL=60
 PIDFILE=/var/run/fan_control.pid
