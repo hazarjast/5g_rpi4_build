@@ -22,8 +22,8 @@
 # *Required Input*
 # $CMD, $TIMEOUT - AT command, timeout period before termindation (in seconds)
 # $ATDEVICE, $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules':
-# ex. '...ttyUSB3...AT secondary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="03"...'
-# ($ATDEVICE="/dev/ttyUSB3", MMVID="2c7c", MMPID="0800", MMUBIND="03")
+# ex. '...ttyUSB2...AT primary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="02"...'
+# ($ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02")
 #
 # *Dependencies*
 # This script requires 'timeout' and 'socat' packages to be installed along with any serial drivers for the interface.
@@ -34,10 +34,10 @@
 PIDFILE=/var/run/quickycom.pid
 CMD="$1"
 TIMEOUT=5
-ATDEVICE=/dev/ttyUSB3
+ATDEVICE=/dev/ttyUSB2
 MMVID="2c7c"
 MMPID="0800"
-MMUBIND="03"
+MMUBIND="02"
 
 # Preliminary logic to ensure this only runs one instance at a time
 if [ -f $PIDFILE ]
