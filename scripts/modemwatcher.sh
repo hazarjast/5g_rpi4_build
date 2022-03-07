@@ -135,7 +135,7 @@ then
   $INFO "Modem is connected to the internet."
 else
   $INFO "Cannot reach internet. Cycling modem."
-  timeout -k 5 5 echo -e AT+CFUN=1,1 | socat -W - $ATDEVICE,crnl
+  timeout -k 5 5 echo -e AT+CFUN=1,1 | socat -W - $ATDEVICE,crnl >/dev/null 2>/dev/null
   watch $RECONNECT
   $INFO "Waiting 10 seconds for interface to come online."
   sleep 10
