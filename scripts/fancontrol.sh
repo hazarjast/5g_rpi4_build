@@ -14,7 +14,7 @@
 # Specifically written for hosts with a modem managed by ModemManager.
 # Modem should be in a 'usbnet' mode which provides an AT port:
 # ex. RM502Q-AE in QMI mode
-# # Package 'pservice' should be installed and used to run this as a daemon.
+# Package 'pservice' should be installed and used to run this as a daemon.
 #
 # *Required Input*
 # $HUB, $PRODID - Obtain w/ 'lsusb' and 'lsusb -v' ('idVendor:idProduct'; 'idVendor/idProduct/bcdDevice')
@@ -33,7 +33,7 @@
 # $INTERVAL - Time in seconds between polling modem temperature.
 #
 # *Dependencies*
-# This script requires, 'lsusb', 'uhubctl', 'modemmanager', 'socat', 'timeout', 'pservice' and 'pkill' packages to be installed.
+# This script requires, 'uhubctl', 'modemmanager', 'socat', 'timeout', and 'pservice' packages to be installed.
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
 #
@@ -48,6 +48,7 @@ MMUBIND="02"
 LIMIT=55
 INTERVAL=60
 PIDFILE=/var/run/fan_control.pid
+LOOPPID=/var/run/fan_control_loop.pid
 INFO="/usr/bin/logger -t FAN_CONTROL"
 ERROR="/usr/bin/logger -p err -t FAN_CONTROL"
 HPDIR=/etc/hotplug.d/usb
@@ -110,9 +111,9 @@ SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", ENV{.MM_USBIFNUM}="\$attr{bInt
 ATTRS{idVendor}=="$MMVID", ATTRS{idProduct}=="$MMPID", ENV{.MM_USBIFNUM}=="$MMUBIND", ENV{ID_MM_PORT_IGNORE}="1"
 LABEL="mm_test_end"
 EOF
-  
+
   PSCONF=/etc/config/pservice
-  if ! $(grep -q 'fancontrol' $PSCONF) 
+  if ! $(grep -q 'fancontrol' $PSCONF)
   then
     [ -f /etc/config/pservice ] && cp -p $PSCONF $PSCONF.bak
 cat << EOF >> $PSCONF
@@ -129,7 +130,7 @@ EOF
   else
     continue
   fi
-  
+
   $INFO "Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
   echo "ModemManager and/or pservice config changes were made. Please reboot OpenWRT to take effect."
   $INFO "ModemManager and/or pservice config changes were made. Prompted user to reboot."
@@ -138,63 +139,44 @@ else
   continue
 fi
 
-# Query current temperature of modem cpu
-# Check that returned modem cpu temp is valid, if not, query it again up 5x until it gets a valid result
-# If no valid result returned, exit with error
-qtemp() {
-TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -wo "[0-9][0-9]")
-TRIES=0
-
-while ! $(echo $TEMP | egrep -qwo "[0-9][0-9]")
-do
-  TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -wo "[0-9][0-9]")
-  sleep 2
-  TRIES=$(expr $TRIES + 1)
-  if [ $TRIES -lt 5 ]
-  then
-    continue
-  else
-    $INFO "Could not obtain a valid cpu temperature from the modem; maybe it is busy. Exiting."
-    terminate
-  fi
-done &
-}
-
-# Main fan control logic
-main() {
-$INFO "Fan controller initialized!"
-
-while true
-do
-  qtemp # Check current modem temp
-  [ -f $FANON ] && STATE="on" || STATE="off" # Check current fan state
-
-  if [ $TEMP -ge $LIMIT ]
-  then
-    [ $STATE = "off" ] && \
-    $(uhubctl -n $HUB -p $PORTS -a on >/dev/null 2>/dev/null && touch $FANON) && \
-    $INFO "Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated."
-  elif [ $TEMP -lt $LIMIT ]
-  then
-    [ $STATE = "on" ] && \
-    $(uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null && rm $FANON) && \
-    $INFO "Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated."
-  fi
-  sleep $INTERVAL
-done &
-}
-
-# Cleanup $PIDFILE and kill main process with any descendants
+# Function to cleanup processes and pidfiles when script is terminated
 terminate() {
-  PID=$(cat $PIDFILE)
-  rm -f $PIDFILE
+  LOOP=$(cat $LOOPPID)
+  rm -f $LOOPPID $PIDFILE
   $INFO "Fan controller killed!"
-  pkill -P $PID
+  kill $LOOP
+  exit 0
 }
 
 trap terminate SIGHUP SIGINT SIGQUIT SIGTERM
 
-main
+$INFO "Fan controller initialized!"
+
+# Main fan control logic
+# Query current temperature of modem cpu
+# Trigger fan behavior based on current temp
+while true
+do
+  timeout -k 5 5 echo -e ATE0 | socat -W - $ATDEVICE,crnl >/dev/null 2>/dev/null # Deactivate AT echo if it is enabled
+  TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -wo "[0-9][0-9]")
+  if $(echo $TEMP | egrep -qwo "[0-9][0-9]")
+  then
+    [ -f $FANON ] && STATE="on" || STATE="off" # Check current fan state
+    if [ $TEMP -ge $LIMIT ]
+    then
+      [ $STATE = "off" ] && \
+      $(uhubctl -n $HUB -p $PORTS -a on >/dev/null 2>/dev/null && touch $FANON) && \
+      $INFO "Modem cpu reached $TEMP which is greater than or equal to the limit of $LIMIT. Fans activated."
+    elif [ $TEMP -lt $LIMIT ]
+    then
+      [ $STATE = "on" ] && \
+      $(uhubctl -n $HUB -p $PORTS -a off >/dev/null 2>/dev/null && rm $FANON) && \
+      $INFO "Modem cpu cooled to $TEMP which is less than the limit of $LIMIT. Fans deactivated."
+    fi
+  else
+    $INFO "Could not obtain a valid temperature reading. Will retry after $INTERVAL seconds."
+  fi
+  sleep $INTERVAL
+done & echo $! > $LOOPPID
 
 wait
-
