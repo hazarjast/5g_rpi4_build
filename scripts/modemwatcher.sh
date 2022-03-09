@@ -4,7 +4,7 @@
 # *Script info*
 # Watch Modem status under ModemManager to ensure it stays connected to the Internet.
 # When connectivity is lost, cycle the modem and recheck connectivity.
-# If cycling the modem does not restore connectivity, then cycle ModemManager.
+# We cycle the modem instead of just the interface because the RM502Q-AE seems to lose NSA/CA ability without a full restart.
 #
 # *Assumptions*
 # Script to be used for a single ModemManager modem defined as $LIFACE in uci.
@@ -14,12 +14,8 @@
 # *Required Inputs*
 # $PINGDST, $LIFACE - Domains to ping, logical (uci) name of the modem interface.
 #
-# $ATDEVICE, $MMVID, $MMPID, $MMUBIND - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules':
-# ex. '...ttyUSB2...AT primary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="02"...'
-# (ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02")
-#
 # *Dependencies*
-# This script requires 'modemmanager', 'socat', 'timeout', and 'pservice' packages.
+# This script requires 'modemmanager' and 'pservice' packages.
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
 #
@@ -27,10 +23,6 @@
 # https://github.com/nickberry17/modem-manager-keepalive/blob/master/30-keepalive_modemmanager
 #
 
-ATDEVICE=/dev/ttyUSB2
-MMVID="2c7c"
-MMPID="0800"
-MMUBIND="02"
 PINGDST="google.com cloudflare.com"
 LIFACE="WWAN"
 PIFACE=$(ubus -v call network.interface.$LIFACE status | egrep -o 'l3_device.*' | tr -d "l3_device: \|\"\,")
@@ -41,7 +33,7 @@ INFO="/usr/bin/logger -t MODEM_WATCHER"
 ERROR="/usr/bin/logger -p err -t MODEM_WATCHER"
 DISCONNECT="state changed (connected ->"
 RECONNECT="state changed (registered -> connected"
-MMDMN="/etc/init.d/modemmanager"
+MMCLI="/usr/bin/mmcli"
 
 # Preliminary logic to ensure this only runs one instance at a time
 [ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
@@ -55,26 +47,11 @@ case "$PFEXST" in
   ;;
 esac
 
-# Unbind ModemManager from an AT port so we can use it
-# Without this 'socat' commands can hang or return no value
-# Also setup this script as a 'pservice' daemon if it's not already
-if [ ! -f "/lib/udev/rules.d/77-mm-test.rules" ]
+# Setup this script as a 'pservice' daemon if it's not already
+PSCONF=/etc/config/pservice
+if ! $(grep -q 'modemwatcher' $PSCONF) 
 then
-cat << EOF >> /lib/udev/rules.d/77-mm-test.rules
-ACTION!="add|change|move|bind", GOTO="mm_test_end"
-SUBSYSTEMS=="usb", ATTRS{idVendor}=="$MMVID", GOTO="mm_test_rules"
-GOTO="mm_test_end"
-
-LABEL="mm_test_rules"
-SUBSYSTEMS=="usb", ATTRS{bInterfaceNumber}=="?*", ENV{.MM_USBIFNUM}="\$attr{bInterfaceNumber}"
-ATTRS{idVendor}=="$MMVID", ATTRS{idProduct}=="$MMPID", ENV{.MM_USBIFNUM}=="$MMUBIND", ENV{ID_MM_PORT_IGNORE}="1"
-LABEL="mm_test_end"
-EOF
-  
-  PSCONF=/etc/config/pservice
-  if ! $(grep -q 'modemwatcher' $PSCONF) 
-  then
-    [ -f /etc/config/pservice ] && cp -p $PSCONF $PSCONF.bak
+  [ -f /etc/config/pservice ] && cp -p $PSCONF $PSCONF.bak
 cat << EOF >> $PSCONF
 
 config pservice
@@ -85,14 +62,9 @@ config pservice
         list args 'exec /scripts/modemwatcher.sh'
 EOF
 
-    $INFO "Setup 'modemwatcher' as a pservice daemon."
-  else
-    continue
-  fi
-  
-  $INFO "Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
-  echo "ModemManager and/or pservice config changes were made. Please reboot OpenWRT to take effect."
-  $INFO "ModemManager and/or pservice config changes were made. Prompted user to reboot."
+  echo "Setup 'modemwatcher' as a pservice daemon."
+  echo "Execute '/etc/init.d/pservice [re]start' or reboot OpenWRT to start it."
+  $INFO "Pservice daemon configured. Notified user to manually start it or reboot."
   exit 0
 else
   continue
@@ -135,27 +107,17 @@ then
   $INFO "Modem is connected to the internet."
 else
   $INFO "Cannot reach internet. Cycling modem."
-  timeout -k 5 5 echo -e AT+CFUN=1,1 | socat -W - $ATDEVICE,crnl >/dev/null 2>/dev/null
+  MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
+  $MMCLI -m $MINDEX -r >/dev/null 2>/dev/null
   watch $RECONNECT
-  $INFO "Waiting 10 seconds for interface to come online."
-  sleep 10
+  $INFO "Waiting 30 seconds for interface to come online."
+  sleep 30
   pinger
     if [ $CONNECTED -eq 1 ]
     then
       $INFO "Modem is connected to the internet."
     else
-      $INFO "Cannot reach internet. Cycling ModemManager."
-      $MMDMN stop && sleep 2 && $MMDMN start
-      watch $RECONNECT
-      $INFO "Waiting 10 seconds for interface to come online."
-      sleep 10
-      pinger
-        if [ $CONNECTED -eq 1 ]
-        then
-          $INFO "Modem is connected to the internet."
-        else
-          $ERROR "Could not restore modem internet connectivity."
-        fi
+      $INFO "Still cannot reach Internet. Send help."
     fi
 fi
 }
@@ -165,10 +127,10 @@ fi
 terminate() {
 CHILD=$(cat $WATCHPID)
 LOOP=$(cat $LOOPPID)
-PARENT=$(cat $PIDFILE)
 rm -f $WATCHPID $PIDFILE $LOOPPID
 $INFO "Modem watcher killed!"
-kill $CHILD $LOOP $PARENT
+kill $CHILD $LOOP
+exit 0
 }
 
 $INFO "Modem watcher initialized!"
