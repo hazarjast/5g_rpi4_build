@@ -95,6 +95,7 @@ then
   echo "No AT command entered. Exiting."
   exit 1
 else
+  timeout -k 5 5 echo -e ATE0 | socat -W - $ATDEVICE,crnl >/dev/null 2>/dev/null # Deactivate AT echo if it is enabled
   timeout -k $TIMEOUT $TIMEOUT echo -e $CMD | socat -W - $ATDEVICE,crnl
 fi
 
