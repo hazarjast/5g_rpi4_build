@@ -8,8 +8,9 @@
 #
 # *Assumptions*
 # Script to be used for a single ModemManager modem defined as $LIFACE in uci.
+# This script should exist under '/scripts/'.
 # Package 'pservice' should be installed and used to run this as a daemon.
-# NOTE: At first run this script will add this script to 'pservice' config.
+# At first run this script will add this script to 'pservice' config.
 #
 # *Required Inputs*
 # $PINGDST, $LIFACE - Domains to ping, logical (uci) name of the modem interface.
@@ -17,7 +18,7 @@
 # *Dependencies*
 # This script requires 'modemmanager' and 'pservice' packages.
 #
-# Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
+# Copyright 2022 hazarjast (and aliases) - hazarjast at protonmail dot com
 #
 # Inspired by Nicholas Smith's excellent work here:
 # https://github.com/nickberry17/modem-manager-keepalive/blob/master/30-keepalive_modemmanager
