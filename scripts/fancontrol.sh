@@ -10,10 +10,11 @@
 # Be sure that $MMUBIND is populated with the correct MM USBIFNUM before running this script!
 #
 # *Assumptions*
+# Specifically written for OpenWRT hosts with a modem managed by ModemManager.
 # Intended to be used with a USB hub which supports Per Port Power Switching (PPPS).
-# Specifically written for hosts with a modem managed by ModemManager.
 # Modem should be in a 'usbnet' mode which provides an AT port:
 # ex. RM502Q-AE in QMI mode
+# This script should exist under '/scripts/'.
 # Package 'pservice' should be installed and used to run this as a daemon.
 #
 # *Required Input*
