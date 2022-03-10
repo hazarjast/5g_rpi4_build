@@ -190,7 +190,7 @@ Yes, 5G will some day possibly provide over 1Gbps speeds in my area but at this 
 This little guy takes 9-36v DC input through bare wire or a barrel connector (we are supplying it with 12v@2.5a from the PoE splitter) and outputs 5v through USB and/or bare wire connectors at up to 6a. This is perfect for us and fits within the power budget which the other components will draw (Modem@3a + RPi@1.8a + Hub@0.1a + Fans@0.8a = 5.7a max). The connectors are also great because we can use the bare wire connectors to split out power to the modem EVB and RPi while connecting the power-only end of our USB 2.0 Y-cable to the USB connector which will provide the supplemental power we need for our hub-connected fans.
 
 ### PCB Antennas
-Since I have a cell tower less than two miles away from me with generally good line-of-sight access, I opted to go for some 12dBi omnidirectional PCB antennas to mount inside the outdoor enclosure with the rest of the components. If you are further from a tower, purchasing some IPEX4/MHF4 to N-type or SMA pigtails which econnect to exteneral directional antennas may be a better choice.
+Since I have a cell tower less than two miles away from me with generally good line-of-sight access, I opted to go for some 12dBi omnidirectional PCB antennas to mount inside the outdoor enclosure with the rest of the components. If you are further from a tower, purchasing some IPEX4/MHF4 to N-type or SMA bulkhead pigtails which can be connected to exteneral directional antennas may be a better choice.
 
 ## Hardware Build
 ### Vent, Fan, and Wire Gland Install
