@@ -4,3 +4,10 @@ config pservice
 	option command /bin/sh
 	list args -c
 	list args 'exec /scripts/modemwatcher.sh'
+
+config pservice
+        option name 'fancontrol'
+        option respawn_maxfail 0
+        option command /bin/sh
+        list args -c
+        list args 'exec /scripts/fancontrol.sh'
