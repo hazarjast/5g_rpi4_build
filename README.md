@@ -39,8 +39,6 @@ If this project benefitted you in some way please consider supporting my efforts
     + [Temporary Creation of a USB WAN](#temporary-creation-of-a-usb-wan)
     + [Install All Required Packages](#install-all-required-packages)
     + [Flash Modem Firmware Update](#flash-modem-firmware-update)
-    + [Switch Modem to Generic Image](#switch-modem-to-generic-image)
-    + [Disable Modem NR SA](#disable-modem-nr-sa)
     + [Configure Modem Interface & Remove Temp USB WAN](#configure-modem-interface--remove-temp-usb-wan)
     + [Add Custom Firewall Rules](#add-custom-firewall-rules)
     + [Configure DMZ to Main Router](#configure-dmz-to-main-router)
@@ -48,6 +46,8 @@ If this project benefitted you in some way please consider supporting my efforts
       - [fancontrol.sh](#fancontrolsh)
       - [modemwatcher.sh](#modemwatchersh)
       - [quickycom.sh](#quickycomsh)
+    + [Switch Modem to Generic Image](#switch-modem-to-generic-image)
+    + [Disable Modem NR SA](#disable-modem-nr-sa)
   * [Results](#results)  
   * [ToDo List](#todo-list)
   * [Historical Background](#historical-background)
@@ -387,28 +387,6 @@ Click 'Start' and allow the modem to update. This may take some minutes but will
 
 Once firmware is successfully flashed. Wait at least 30 seconds before disconnecting it from the PC and reconnecting it to the RPi to make sure all post-flash actions have completed.
 
-### Switch Modem to Generic Image
-In initial testing I found that the RM502Q-AE had Quectel's auto-image-switching feature activated by default. This 'feature' switches its firmware image (MBN) based on the carrier SIM which is inserted. Thus, when I inserted my carrier SIM it promptly switched to using the commercial image for my carrier. While this first party image allowed me to obtain IP assignment which was very geo-local (lowest latency), I noticed a significant loss of ICMP and UDP packets. Thus, ping and connectivity to UDP (such as external DNS, WireGuard, etc.) was completely broken at worst or unreliable at best.
-
-I found that if I disabled the auto-image-switching and selected the 'Generic' 3GPP image from Quectel instead of my carier image, the ICMP/UDP packet loss issues disappeared. The only downside is that the IP that the carrier then routed me out of on the generic firmware was less geo-local (higher latency). I have opened a support thread with Quectel on this issue but have not received any resolution at this time so in the interim I am staying on the generic image. AT commands for disabling auto-image-switching and switching manually to the generic image are below (utilizing our qcom/quickycom.sh wrapper script):
-
-```bash
-qcom AT+CFUN=0
-qcom AT+QMBNCFG=\"AutoSel\",0
-qcom AT+QMBNCFG=\"Deactivate\"
-qcom AT+QMBNCFG=\"select\",\"ROW_Generic_3GPP_PTCRB_GCF\"
-qcom AT+CFUN=1,1
-```
-
-### Disable Modem NR SA
-The only NR SA support in my area is N71 which does not have a lot of bandwidth allocated so for now I have disabled NR SA mode to leverage the significat throughput gains offered by NSA. The command to disable NR SA is below (leveraging our qcom wrapper):
-
-```bash
-qcom AT+CFUN=0
-qcom AT+QNWPREFCFG=\"nr5g_disable_mode\",1
-qcom AT+CFUN=1,1
-```
-
 ### Configure Modem Interface & Remove Temp USB WAN
 Once packages are installed and OpenWRT has been rebooted, log back into the web interface to configure the modem interface (I have called mine 'WWAN'):
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-10_17h39_30.png" />
@@ -485,6 +463,28 @@ This is an interactive wrapper for the 'socat' utility which allows us to commun
 **$CMD, $TIMEOUT** - AT command, timeout period before termindation (in seconds)
 
 **$ATDEVICE, $MMVID, $MMPID, $MMUBIND** - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB2...AT primary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="02"...' Ex. $ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02".
+
+### Switch Modem to Generic Image
+In initial testing I found that the RM502Q-AE had Quectel's auto-image-switching feature activated by default. This 'feature' switches its firmware image (MBN) based on the carrier SIM which is inserted. Thus, when I inserted my carrier SIM it promptly switched to using the commercial image for my carrier. While this first party image allowed me to obtain IP assignment which was very geo-local (lowest latency), I noticed a significant loss of ICMP and UDP packets. Thus, ping and connectivity to UDP (such as external DNS, WireGuard, etc.) was completely broken at worst or unreliable at best.
+
+I found that if I disabled the auto-image-switching and selected the 'Generic' 3GPP image from Quectel instead of my carier image, the ICMP/UDP packet loss issues disappeared. The only downside is that the IP that the carrier then routed me out of on the generic firmware was less geo-local (higher latency). I have opened a support thread with Quectel on this issue but have not received any resolution at this time so in the interim I am staying on the generic image. AT commands for disabling auto-image-switching and switching manually to the generic image are below (utilizing our qcom/quickycom.sh wrapper script):
+
+```bash
+qcom AT+CFUN=0
+qcom AT+QMBNCFG=\"AutoSel\",0
+qcom AT+QMBNCFG=\"Deactivate\"
+qcom AT+QMBNCFG=\"select\",\"ROW_Generic_3GPP_PTCRB_GCF\"
+qcom AT+CFUN=1,1
+```
+
+### Disable Modem NR SA
+The only NR SA support in my area is N71 which does not have a lot of bandwidth allocated so for now I have disabled NR SA mode to leverage the significat throughput gains offered by NSA. The command to disable NR SA is below (leveraging our qcom wrapper):
+
+```bash
+qcom AT+CFUN=0
+qcom AT+QNWPREFCFG=\"nr5g_disable_mode\",1
+qcom AT+CFUN=1,1
+```
 
 # Results
 My local tower offers only n71 SA which is not allocated much bandwidth at present so I am operating in NSA mode with a PCC of B2 or B4/B66 aggregated with n41. The initial results are a solid improvement over my previous average speeds on LTE only and ping is much improved. The device has so far only been tested indoors so I am excited to get it outside and up high to see what additional speed improvements I may achieve under those conditions.
