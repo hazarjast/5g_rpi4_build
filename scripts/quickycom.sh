@@ -30,7 +30,7 @@
 # *Dependencies*
 # This script requires 'timeout' and 'socat' packages to be installed.
 #
-# Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
+# Copyright 2022 hazarjast (and aliases) - hazarjast at protonmail dot com
 #
 
 PIDFILE=/var/run/quickycom.pid
