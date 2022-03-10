@@ -39,6 +39,8 @@ If this project benefitted you in some way please consider supporting my efforts
     + [Temporary Creation of a USB WAN](#temporary-creation-of-a-usb-wan)
     + [Install All Required Packages](#install-all-required-packages)
     + [Flash Modem Firmware Update](#flash-modem-firmware-update)
+    + [Switch Modem to Generic Image](#switch-modem-to-generic-image)
+    + [Disable Modem NR SA](#disable-modem-nr-sa)
     + [Configure Modem Interface & Remove Temp USB WAN](#configure-modem-interface--remove-temp-usb-wan)
     + [Add Custom Firewall Rules](#add-custom-firewall-rules)
     + [Configure DMZ to Main Router](#configure-dmz-to-main-router)
@@ -349,7 +351,7 @@ Now that the RPi has Internet access via our temporary WAN, go back to the Putty
 
 ```bash
 opkg update
-opkg install usbutils kmod-usb-net-qmi-wwan kmod-usb-serial-option luci-proto-modemmanager uhubctl socat coreutils-timeout iptables-mod-ipopt pservice procps-ng-pkill
+opkg install usbutils kmod-usb-net-qmi-wwan kmod-usb-serial-option luci-proto-modemmanager uhubctl socat coreutils-timeout iptables-mod-ipopt pservice
 reboot
 ```
 
@@ -385,6 +387,27 @@ Click 'Start' and allow the modem to update. This may take some minutes but will
 
 Once firmware is successfully flashed. Wait at least 30 seconds before disconnecting it from the PC and reconnecting it to the RPi to make sure all post-flash actions have completed.
 
+### Switch Modem to Generic Image
+In initial testing I found that the RM502Q-AE had Quectel's auto-image-switching feature activated by default. This 'feature' switches its firmware image (MBN) based on the carrier SIM which is inserted. Thus, when I inserted my carrier SIM it promptly switched to using the commercial image for my carrier. While this first party image allowed me to obtain IP assignment which was very geo-local (lowest latency), I noticed a significant loss of ICMP and UDP packets. Thus, ping and connectivity to UDP (such as external DNS, WireGuard, etc.) was completely broken at worst or unreliable at best.
+
+I found that if I disabled the auto-image-switching and selected the 'Generic' 3GPP image from Quectel instead of my carier image, the ICMP/UDP packet loss issues disappeared. The only downside is that the IP that the carrier then routed me out of on the generic firmware was less geo-local (higher latency). I have opened a support thread with Quectel on this issue but have not received any resolution at this time so in the interim I am staying on the generic image. AT commands for disabling auto-image-switching and switching manually to the generic image are below (utilizing our qcom/quickycom.sh wrapper script):
+
+```bash
+qcom AT+CFUN=0
+qcom AT+QMBNCFG=\"AutoSel\",0
+qcom AT+QMBNCFG=\"Deactivate\"
+qcom AT+QMBNCFG=\"select\",\"ROW_Generic_3GPP_PTCRB_GCF\"
+qcom AT+CFUN=1,1
+```
+
+### Disable Modem NR SA
+The only NR SA support in my area is N71 which does not have a lot of bandwidth allocated so for now I have disabled NR SA mode to leverage the significat throughput gains offered by NSA. The command to disable NR SA is below (leveraging our qcom wrapper):
+
+```bash
+qcom AT+CFUN=0
+qcom AT+QNWPREFCFG=\"nr5g_disable_mode\",1
+qcom AT+CFUN=1,1
+```
 
 ### Configure Modem Interface & Remove Temp USB WAN
 Once packages are installed and OpenWRT has been rebooted, log back into the web interface to configure the modem interface (I have called mine 'WWAN'):
@@ -414,11 +437,11 @@ ip6tables -w -t mangle -I POSTROUTING 1 -o wwan0 -j HL --hl-set 65`
 If you modem device is not 'wwan0' updated it accordingly in the rules above. The TTL value of 65 is used here because TTL decrements and you need it to hit the cellular network with a TTL of 64 (65-1=64). This value can vary with some LAN configurations and cellular carriers so you may have to use something like 64 or 66 (some claim simply setting it to 64 is carrier agnostic but this has not been my experience, YMMV).
 
 ### Configure DMZ to Main Router
-Since I am using OPNSense as my main home router and will be using the RPi OpenWRT install as a modem host only, I will be statically assigning the IP address of my OPNSense WAN interface in the same IPv4 subnet as the RPi LAN and setting the RPi as the gateway for Internet traffic. My LAN devices are all IPv4 presently and my carrier, who is fully transitioned to IPv6 on their networks, finally fixed their 464xlat implementation recently so I won't be bothering with IPv6 addressing at the OPNSense router as part of this project.
+Since I am using OPNSense as my main home router and will be using the RPi OpenWRT install as a modem host only, I will be statically assigning the IP address of my OPNSense WAN interface in the same IPv4 subnet as the RPi LAN and setting the RPi as the gateway for Internet traffic. My LAN devices are all IPv4 presently and my carrier, who is fully transitioned to IPv6 on their networks, has a mostly-working 464xlat implementation on their side so I won't be bothering with IPv6 addressing at the OPNSense router WAN or LAN as part of this project.
 
-At this point many will ask: Why not setup a bridge or IPPT (IP Passthrough) to pass the cellular public IP to the OPNSense WAN? There's a couple reasons for this the first of which is how my carrier assigns IP addresses. Since all newer provisioned SIMs from my carrier will only allow attach to the network with a dual stack IPv4v6 (or IPv6 only) PDP connection profile, ModemManager's primary IP for the modem interface is thus IPv6; the IPv4 address is then set statically by ModemManager to 192.0.0.2 with gateway on the modem itself as 192.0.0.1. Obviously this IPv4 address is not in publicly routable address space so there's no use bridging it to OPNSense WAN. Furthermore, the IPv6 address assigned by the carrier to the modem interface appears to be behind carrier grade NAT (CGNAT) and/or otherwise blocking unsolicited inbound traffic on IPv6 (i.e. one cannot host anything on the LAN which must be accessed from the Internet. More info here: https://community.t-mobile.com/tv-home-internet-7/home-internet-service-ipv6-traffic-is-all-filtered-even-when-using-a-netgear-lte-router-no-port-forwarding-plz-fix-34310).
+At this point many will ask: Why not setup a bridge or IPPT (IP Passthrough) to pass the cellular public IP to the OPNSense WAN? There's a couple reasons for this the first of which is how my carrier assigns IP addresses. Since all newer provisioned SIMs from my carrier will only allow attach to the network with a dual stack IPv4v6 (or IPv6 only) PDP connection profile, ModemManager's primary IP for the modem interface is thus IPv6; the IPv4 address is then either set to a CGNAT IP by the carrier or set statically by ModemManager to 192.0.0.2 with gateway on the modem itself as 192.0.0.1. Obviously neither IPv4 address would be publicly routable address space so there's no use bridging it to OPNSense WAN. Furthermore, the IPv6 address assigned by the carrier to the modem interface appears to be behind carrier grade NAT (CGNAT) and/or otherwise blocking unsolicited inbound traffic on IPv6 (i.e. one cannot host anything on the LAN which must be accessed from the Internet. More info here: https://community.t-mobile.com/tv-home-internet-7/home-internet-service-ipv6-traffic-is-all-filtered-even-when-using-a-netgear-lte-router-no-port-forwarding-plz-fix-34310).
 
-On top of that, the carrier assigned IPv6 address is a /64 prefix in which Prefix Delegation, Router Advertisement or other means must be used in order connect LAN clients to the Internet (See: https://datatracker.ietf.org/doc/html/rfc7278). This is quite painful to deal with without a clear benefit or reward for going through the hassle of configuring it all. The second reason a bridge or IPPT setup would be not worth it is because the default QMI (and MBIM) modes of our modem are 'raw-IP' protocols, not Ethernet. Thus, traditional bridging at layer 2 does not work because our 'wwan0' device created by ModemManager is not a true Ethernet device and cannot be used as such; it does not even have a MAC address assigned by default. From a layer 3 perspective things do not get much easier even with tools like 'relayd' since that also only considers Ethernet or WiFi devices as suitable members for its bridging capabilities. If one wanted to truly create a pseudo-bridge/half-bridge/IPPPT interface to be used as WAN on another router, then you would need to setup an additional DHCP server, configure static routes, and utilize proxy ARP to accomplish the task (See: https://forums.whirlpool.net.au/thread/2530290?p=18#r360).
+On top of that, the carrier assigned IPv6 address is a /64 prefix in which Prefix Delegation, Router Advertisement or other means must be used in order connect LAN clients to the Internet (See: https://datatracker.ietf.org/doc/html/rfc7278). This is an annoyance to deal with and without a clear benefit or reward for going through the hassle of configuring it all. The second reason a bridge or IPPT setup would be not worth it is because the default QMI (and MBIM) modes of our modem are 'raw-IP' protocols, not Ethernet. Thus, traditional bridging at layer 2 does not work because our 'wwan0' device created by ModemManager is not a true Ethernet device and cannot be used as such; it does not even have a MAC address assigned by default. From a layer 3 perspective things do not get much easier even with tools like 'relayd' since that also only considers Ethernet or WiFi devices as suitable members for its bridging capabilities. If one wanted to truly create a pseudo-bridge/half-bridge/IPPPT interface to be used as WAN on another router, then you would need to setup an additional DHCP server, configure static routes, and utilize proxy ARP to accomplish the task (See: https://forums.whirlpool.net.au/thread/2530290?p=18#r360).
 
 For me the "juice is not worth the squeeze" when it comes to configuring a bridge or IPPT as WAN to my main router, this may be different if your carrier handles IP addressing differently or you are running IPv6 in your LAN. I understasnd one size does not fit all here. However, if we look into what typical IPPT and bridge setups offer outside of a publicly addressable IP, it would be the bypass of firewall and associated routing on a device when using it as WAN on another router. For this, we can simply setup a DMZ on the RPi firewall which forwards all traffic from the modem interface to our statically assigned WAN IP in OPNSense. OpenWRT doesn't have a specific "DMZ" feature but under "Port Forwards" we have the ability to accomplish the same thing:
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-10_12h09_52.png" />
@@ -452,7 +475,7 @@ This script controls our case fans. On first run this script will add itself to 
 #### modemwatcher.sh
 This script is necessary because ModemManager does not automatically cycle the modem interface on state changes that can occur during normal 'modem <-> tower' communications. Other ModemManager OS platforms (especially Debian based) use NetworkManager to handle this scenario but OpenWRT has no direct feature parity here. This is a known 'issue' when using ModemManager on OpenWRT and not a defect of ModemManager itself (see: https://lists.freedesktop.org/archives/modemmanager-devel/2021-July/008739.html). Other solutions I found relied on 'watchdog' scripts scheduled at a regular interval under cron to wait and re-query the modem before taking action which resulted in some seconds or minutes of actual Internet connectivity to downstream clients which is really undesirable. Thus, this script was created to watch the modem in realtime and take immediate action as required.
 
-Functionality-wise, this script watches the modem state for changes which could result in loss of Internet connectivity. On first run this script checks that the selected modem AT interface is unbound from ModemManager so we can use it. If this isn't the case, it creates the necessary 'udev' rule to unbind the interface and prompts the user to reboot for the change to take effect. Also on first run, the script will add itself to 'pservice' config if not present already. From then on it runs as a daemon under 'pservice' and watches the system log in real time to see if the modem exits a 'connected' state. If so, it checks internet connectivity by pinging google.com and cloudflare.com (two sites with incredibly reliable uptime). If Internet connectivity is not found, the script cycles the modem interface under OpenWRT and re-checks connectivity. If the Internet still cannot be reached, ModemManager service is cycled. The following inputs should be entered appropriately prior to first run:
+Functionality-wise, this script watches the modem to see if it leaves the 'connected' state which would result in loss of Internet connectivity. On first run, the script will add itself to 'pservice' config if not present already. From then on it runs as a daemon under 'pservice' and watches the system log in real time to check for state changes. If the modem does leave the 'connected' state, it checks internet connectivity by pinging google.com and cloudflare.com (two sites with incredibly reliable uptime). If Internet connectivity is not found, the script restarts the modem using mmcli (ModemManager command line interface) and re-checks connectivity. The following inputs should be entered appropriately prior to first run:
 
 **$PINGDST, $LIFACE** - Domains to ping, logical (uci) name of the modem interface.
 
@@ -464,11 +487,11 @@ This is an interactive wrapper for the 'socat' utility which allows us to commun
 **$ATDEVICE, $MMVID, $MMPID, $MMUBIND** - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB2...AT primary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="02"...' Ex. $ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02".
 
 # Results
-My local tower offers only n71 SA which is not allocated much bandwidth at present so I am operating in NSA mode with a PCC of B2 or B4 aggregated with n41. The initial results are a solid improvement over my previous average speeds on LTE only and ping is much improved. The device has so far only been tested indoors so I am excited to get it outside and up high to see what additional speed improvements I may achieve under those conditions.
+My local tower offers only n71 SA which is not allocated much bandwidth at present so I am operating in NSA mode with a PCC of B2 or B4/B66 aggregated with n41. The initial results are a solid improvement over my previous average speeds on LTE only and ping is much improved. The device has so far only been tested indoors so I am excited to get it outside and up high to see what additional speed improvements I may achieve under those conditions.
 
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-10_13h34_53.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-09_17h31_49.png" />
 
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-02-09_13h16_47.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-09_17h29_09.png" />
 
 # ToDo List
 * Look at adding 'sms-tool' (and 'luci-app-sms-tool') for SMS functionality
