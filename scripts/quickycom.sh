@@ -1,20 +1,22 @@
 #!/bin/sh
 
 #
-# Script info:
+# *Script info*
 # Wrapper script for 'socat' which communicates with a USB modem's 'AT' serial interface.
 # This wrapper allows sending of AT commands, which provide instant return output, to the modem easily.
 # Includes an additional 'timeout' failsafe (SIGTERM after $TIMEOUT, SIGKILL after an add'l $TIMEOUT).
 # For some query commands (ex. +COPS, +QSCAN, etc.) it is recommended to open an interactive session:
 # ex. 'socat -W - $ATDEVICE'. This is because it may take a long time for the modem to return a value.
 #
-# NOTE: On first run this script checks that ModemManager is unbound from the selected AT interface.
-# If this is not the case, a udev rule is created to accomplish this and user is then prompted to reboot.
+# NOTE: A ModemManager udev rule is added at first run to unbind the primary AT port for our use.
+# User is then prompted to reboot OpenWRT for the change to take effect.
+# Be sure that $MMUBIND is populated with the correct MM USBIFNUM before running this script!
 # Also creates a symlink on first run so that you can execute as simply 'qcom' thereafter.
 #
 # *Assumptions*
 # Specifically written for OpenWRT hosts with a modem managed by ModemManager.
-# Modem should be in a USB mode which provides a free AT serial port.
+# Modem should be in a 'usbnet' mode which provides an AT port:
+# ex. RM502Q-AE in QMI mode
 # This script should exist under '/scripts/'.
 # Just like raw 'socat' and other serial terminals, double quotes should be escaped (using backslash):
 # ex. 'qcom AT+QENG=\"servingcell\"'
@@ -26,7 +28,7 @@
 # ($ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02")
 #
 # *Dependencies*
-# This script requires 'timeout' and 'socat' packages to be installed along with any serial drivers for the interface.
+# This script requires 'timeout' and 'socat' packages to be installed.
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
 #
