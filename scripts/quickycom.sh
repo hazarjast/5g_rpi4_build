@@ -95,8 +95,9 @@ then
   echo "No AT command entered. Exiting."
   exit 1
 else
-  timeout -k 5 5 echo -e ATE0 | socat -W - $ATDEVICE,crnl >/dev/null 2>/dev/null # Deactivate AT echo if it is enabled
-  timeout -k $TIMEOUT $TIMEOUT echo -e $CMD | socat -W - $ATDEVICE,crnl
+  ATE0=$(timeout -k 5 5 echo -e ATE0 | socat -W - $ATDEVICE,crnl) # Deactivate AT echo if it is enabled
+  [ $ATE0 = "OK" ] && timeout -k $TIMEOUT $TIMEOUT echo -e $CMD | socat -W - $ATDEVICE,crnl || \
+  echo "$ATDEVICE appears to be busy. Try again later."
 fi
 
 # Houskeeping for pidfile
