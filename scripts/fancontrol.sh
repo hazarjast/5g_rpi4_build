@@ -16,6 +16,7 @@
 # ex. RM502Q-AE in QMI mode
 # This script should exist under '/scripts/'.
 # Package 'pservice' should be installed and used to run this as a daemon.
+# At first run this script will add this script to 'pservice' config.
 #
 # *Required Input*
 # $HUB, $PRODID - Obtain w/ 'lsusb' and 'lsusb -v' ('idVendor:idProduct'; 'idVendor/idProduct/bcdDevice')
@@ -36,7 +37,7 @@
 # *Dependencies*
 # This script requires, 'uhubctl', 'modemmanager', 'socat', 'timeout', and 'pservice' packages to be installed.
 #
-# Copyright 2022 hazarjast (and aliases) - hazarjast@protonmail.com
+# Copyright 2022 hazarjast (and aliases) - hazarjast at protonmail dot com
 #
 
 HUB="05e3:0608"
