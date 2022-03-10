@@ -157,8 +157,8 @@ $INFO "Fan controller initialized!"
 # Trigger fan behavior based on current temp
 while true
 do
-  timeout -k 5 5 echo -e ATE0 | socat -W - $ATDEVICE,crnl >/dev/null 2>/dev/null # Deactivate AT echo if it is enabled
-  TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -wo "[0-9][0-9]")
+  ATE0=$(timeout -k 5 5 echo -e ATE0 | socat -W - $ATDEVICE,crnl) # Deactivate AT echo if it is enabled
+  [ $ATE0 = "OK" ] && TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat -W - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -wo "[0-9][0-9]")
   if $(echo $TEMP | egrep -qwo "[0-9][0-9]")
   then
     [ -f $FANON ] && STATE="on" || STATE="off" # Check current fan state
