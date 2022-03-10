@@ -73,18 +73,23 @@ The goal of this project can be summed up as follows: Build a capable, stable, l
 
 
 ## Parts List
+I've included affiliate links to items which are sold by The Wireless Haven as I prefer to support local merchants were possible. The rest of the items can be sourced from the usual suspects and I'm not a big enough 'creator' to be accepted into their affilate programs so I won't be adding links for them :)
+
 * **Quectel RM502Q-AE**
   * Supports all current LTE and NR low and mid-spectrum bands by US carriers (no mmWave)
   * SDX55 chipset supporting NR SA, NR CA (FDD+FDD, TDD+TDD), NSA (LTE+NR), and VoLTE
   * M.2 Key B connection supporting USB 3.x and PCIe w/ IPEX4/MHF4 antenna connectors
+  * https://thewirelesshaven.com/shop/modems-hotspots/5g-modems/quectel-rm502q-ae-5g-cellular-modem?aflt=3345
 * **Copper Modem Heatsink**
   * Phyiscal dimensions: 40x26x4mm
+  * https://thewirelesshaven.com/shop/accessories/cooling/copper-heatsink-for-5g-modems-4mm-low-clearance?aflt=3345
 * **M.2 to USB 3.0 Evaluation Board**
   * "5G M.2 TO USB3.0-KIT PRO"
   * 5V DC carrel connector and switch; accepts external 5V power source
   * USB Type-C connector with Texas Instruments USB 3.0 control chip
   * Dual spring-loaded nano SIM slots
   * M.2 Key B connector for modem
+  * Alternative single SIM slot version: https://thewirelesshaven.com/shop/mini-pcie-m2-adapters/modem-enclosure/usb3-0-to-ngff-m-2-key-b-4g-5g-modem-adapter-enclosure-with-sim-card-slot-new-style?aflt=3345
 * **12dBi 5G PCB Omnidirectional Antennas (x4)**
   * 20cm cable
   * IPEX4/MHF4 connectors
@@ -132,10 +137,12 @@ The goal of this project can be summed up as follows: Build a capable, stable, l
   * 1" wide
 * **802.3AT PoE Gigabit Splitter**
   * DC 48v input
-  * DC 18v/12v/9v/5v output (30w max)
+  * DC 12v output
+  * https://thewirelesshaven.com/shop/poe/poe-splitters/48v-to-12v-3a-poe-gigabit-splitter-5-5mm-x-2-1mm-power-plug-tip-2?aflt=3345
 * **802.3AT PoE Gigabit Injector**
   * AC 120v input
-  * DC 48v output (30w max)
+  * DC 48v output
+  * https://thewirelesshaven.com/shop/power-supplies-adapters/poe-power-supplies/poe-desktop-adapter-48v-1-5a-72w-gigabit-2?aflt=3345
 * **320pc Nylon Standoff/Screw/Washer Kit**
   * Assorted lengths
   * M3 size
