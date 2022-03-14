@@ -26,7 +26,6 @@
 
 PINGDST="google.com cloudflare.com"
 LIFACE="WWAN"
-PIFACE=$(ubus -v call network.interface.$LIFACE status | egrep -o 'l3_device.*' | tr -d "l3_device: \|\"\,")
 PIDFILE=/var/run/modem_watcher.pid
 WATCHPID="/var/run/modem_logread.pid"
 LOOPPID="/var/run/modem_loop.pid"
@@ -80,8 +79,15 @@ do
   if [ $CONNECTED -eq 0 ]
   then
     $INFO "Checking interet connectivity by pinging $DEST."
-    ping -I $PIFACE -c1 $DEST >/dev/null 2>/dev/null
-    [ $? -eq 0 ] && CONNECTED=1
+    ubus -v call network.interface.$LIFACE status >/dev/null 2>/dev/null && \
+    PIFACE=$(ubus -v call network.interface.$LIFACE status | egrep -o 'l3_device.*' | tr -d "l3_device: \|\"\,")
+    if [ ! -z $PIFACE ]
+    then 
+      ping -I $PIFACE -c1 $DEST >/dev/null 2>/dev/null
+      [ $? -eq 0 ] && CONNECTED=1
+    else
+      $ERROR "No physical iface could be fround for logical iface $LIFACE. Unable to ping."
+    fi
   fi
 done
 }
@@ -100,9 +106,7 @@ fi
 # Restarts ModemManager if no connectivity is found
 check() {
 $INFO "Modem left connected state."
-
 pinger
-
 if [ $CONNECTED -eq 1 ]
 then
   $INFO "Modem is connected to the internet."
@@ -111,8 +115,6 @@ else
   MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
   $MMCLI -m $MINDEX -r >/dev/null 2>/dev/null
   watch $RECONNECT
-  $INFO "Waiting 30 seconds for interface to come online."
-  sleep 30
   pinger
     if [ $CONNECTED -eq 1 ]
     then
