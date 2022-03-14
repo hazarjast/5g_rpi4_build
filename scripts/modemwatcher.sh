@@ -79,15 +79,14 @@ do
   if [ $CONNECTED -eq 0 ]
   then
     $INFO "Checking interet connectivity by pinging $DEST."
-    ubus -v call network.interface.$LIFACE status >/dev/null 2>/dev/null && \
-    PIFACE=$(ubus -v call network.interface.$LIFACE status | egrep -o 'l3_device.*' | tr -d "l3_device: \|\"\,")
-    if [ ! -z $PIFACE ]
-    then 
-      ping -I $PIFACE -c1 $DEST >/dev/null 2>/dev/null
-      [ $? -eq 0 ] && CONNECTED=1
-    else
-      $ERROR "No physical iface could be fround for logical iface $LIFACE. Unable to ping."
-    fi
+    while [ -z $PIFACE ]
+    do
+      ubus -v call network.interface.$LIFACE status >/dev/null 2>/dev/null && \
+      PIFACE=$(ubus -v call network.interface.$LIFACE status | egrep -o 'l3_device.*' | tr -d "l3_device: \|\"\,")
+      sleep 1
+    done
+    ping -I $PIFACE -c1 $DEST >/dev/null 2>/dev/null
+    [ $? -eq 0 ] && CONNECTED=1
   fi
 done
 }
