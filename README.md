@@ -319,10 +319,8 @@ Given the default IP will conflict with many existing routers running on 192.168
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_12.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_32.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_47.png" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_58.png" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h43_25.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-14_08h25_31.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h45_07.png" />
-<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h41_47.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_10h45_24.png" />
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-08_11h21_12.png" />
 
