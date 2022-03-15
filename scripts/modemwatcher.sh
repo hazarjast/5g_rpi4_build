@@ -4,7 +4,7 @@
 # *Script info*
 # Watch Modem status under ModemManager to ensure it stays connected to the Internet.
 # When connectivity is lost, cycle the modem and recheck connectivity.
-# We cycle the modem instead of just the interface because the RM502Q-AE seems to lose NSA/CA ability without a full restart.
+# We cycle the modem instead of just the interface because the RM502Q-AE seems to lose CA ability under NSA without a full restart.
 #
 # *Assumptions*
 # Script to be used for a single ModemManager modem defined as $LIFACE in uci.
