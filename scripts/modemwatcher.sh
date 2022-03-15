@@ -34,6 +34,8 @@ ERROR="/usr/bin/logger -p err -t MODEM_WATCHER"
 DISCONNECT="state changed (connected ->"
 RECONNECT="state changed (registered -> connected"
 MMCLI="/usr/bin/mmcli"
+IFRESTART="successfully disabled the modem"
+FRESET=0
 
 # Preliminary logic to ensure this only runs one instance at a time
 [ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
@@ -78,7 +80,7 @@ for DEST in $PINGDST
 do
   if [ $CONNECTED -eq 0 ]
   then
-    $INFO "Checking interet connectivity by pinging $DEST."
+    $INFO "Checking internet connectivity by pinging $DEST."
     while [ -z $PIFACE ]
     do
       ubus -v call network.interface.$LIFACE status >/dev/null 2>/dev/null && \
@@ -97,23 +99,33 @@ if [ -f $PIDFILE ]
 then
   (logread -f & echo $! > $WATCHPID;) | \
   (grep -q "$1" && kill $(cat $WATCHPID) && rm $WATCHPID;)
+  [ $FRESET -eq 0 ] && sleep 5 && logread |grep -q "$IFRESTART" && FRESET=1
   [ "$1" = "$DISCONNECT" ] && [ -f $LOOPPID ] && check
 fi
 }
 
 # Checks for connectivity with 'pinger' and exits early if found
-# Restarts ModemManager if no connectivity is found
 check() {
 $INFO "Modem left connected state."
 pinger
-if [ $CONNECTED -eq 1 ]
+if [ $CONNECTED -eq 1 ] && [ $FRESET -eq 0 ]
 then
   $INFO "Modem is connected to the internet."
+elif [ $FRESET -eq 1 ]
+then
+  $INFO "$LIFACE was restarted. Cycling modem."
+  FRESET=0
+  mcycle
+  pinger
+    if [ $CONNECTED -eq 1 ]
+    then
+      $INFO "Modem is connected to the internet."
+    else
+      $INFO "Still cannot reach Internet. Send help."
+    fi
 else
   $INFO "Cannot reach internet. Cycling modem."
-  MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
-  $MMCLI -m $MINDEX -r >/dev/null 2>/dev/null
-  watch $RECONNECT
+  mcycle
   pinger
     if [ $CONNECTED -eq 1 ]
     then
@@ -122,6 +134,13 @@ else
       $INFO "Still cannot reach Internet. Send help."
     fi
 fi
+}
+
+# Restarts modem if no connectivity is found or if $LIFACE is restarted
+mcycle() {
+MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
+$MMCLI -m $MINDEX -r >/dev/null 2>/dev/null
+watch $RECONNECT
 }
 
 # Cleanup $PIDFILE and kill watcher loop when daemon is stopped
