@@ -537,7 +537,7 @@ Go to LuCI > Applications and select 'luci-app-sms-tool' by pressing 'm'. Exit a
 ```bash
 make package/luci-app-sms-tool/compile
 ```
-It will take some minutes to complete depending on CPU as it has to compile all dependencies along with the app source code. You can increase speed by adding the '-j[x]' switch where '[x]' is the number of CPUs the compile should be threaded across. With the default single CPU selection, it took 10-15 minutes to complete.The .ipk files for the resulting two apps, sms-tool and luci-app-sms-tool, will be located under '...bin/packages/aarch64_cortex-a72/base'. I used WinSCP to download them from my VPS and then upload them to the OpenWRT install. From there they could be instaled with opkg as normal:
+It will take some minutes to complete depending on CPU as it has to compile all dependencies along with the app source code. You can increase speed by adding the '-j[x]' switch where '[x]' is the number of CPUs the compile should be threaded across. With the default single CPU selection, it took 10-15 minutes to complete.The .ipk files for the resulting two apps, sms-tool and luci-app-sms-tool, will be located under '...bin/packages/aarch64_cortex-a72/base'. I used WinSCP to download them from my VPS and then upload them to the OpenWRT install. I've also placed a copy under https://github.com/hazarjast/5g_rpi4_build/tree/main/images for easy download if you would like to use them. Once copied over to OpenWRT they can be instaled with opkg as normal:
 ```bash
 root@OpenWrt:~# okpg install luci-app-sms-tool_1.9.3-20220315_all.ipk
 -ash: okpg: not found
@@ -569,6 +569,7 @@ The first time we click on it it may hang for a minute or two because by default
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-17_10h27_25.png" />
 
 Be sure to click 'Save & Apply' when done.
+
 ***NOTE***
 There is also a handy tab which allows us to send AT comands from the gui. Be aware that some of the AT commands included by default can break your configuration (ex. AT+QCFG="usbnet" etc.) so I would not recomend executing any of them unless you know what they do :)
 
