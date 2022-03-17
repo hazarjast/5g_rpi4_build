@@ -524,6 +524,7 @@ cd ..
 (may run for a few minutes as it downloads ~2GB)
 
 ./scripts/feeds install -a
+
 make menuconfig
 ```
 At this point the menuconfig will open. Enter Global Build Settings and in the submenu, deselect/exclude the following options:
@@ -557,7 +558,19 @@ uci: Entry not found
 //usr/lib/opkg/info/luci-app-sms-tool.postinst: line 286: /etc/init.d/smsled: Permission denied
 root@OpenWrt:~#
 ```
-As you can see there were some errors on install but they do not seem to have affected the functionality of the packages in any way from my testing so far.
+As you can see there were some errors on install but they do not seem to have affected the functionality of the packages in any way from my testing so far. Now we can login to the web interface of OpenWRT and we should see a new menu option called 'Modem':
+
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-17_10h12_13.png" />
+
+The first time we click on it it may hang for a minute or two because by default it is trying to access '/dev/ttyUSB0' which our AT port is not located at. Once it loads we need to update the Configuration so that it works properly with our modem:
+
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-17_10h26_38.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-17_10h27_16.png" />
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-17_10h27_25.png" />
+
+Be sure to click 'Save & Apply' when done.
+***NOTE***
+There is also a handy tab which allows us to send AT comands from the gui. Be aware that some of the AT commands included by default can break your configuration (ex. AT+QCFG="usbnet" etc.) so I would not recomend executing any of them unless you know what they do :)
 
 # Results
 My local tower offers only n71 SA which is not allocated much bandwidth at present so I am operating in NSA mode with a PCC of B2 or B4/B66 aggregated with n41. The initial results are a solid improvement over my previous average speeds on LTE only and ping is much improved. The device has so far only been tested indoors so I am excited to get it outside and up high to see what additional speed improvements I may achieve under those conditions.
@@ -567,7 +580,6 @@ My local tower offers only n71 SA which is not allocated much bandwidth at prese
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-03-09_17h29_09.png" />
 
 # ToDo List
-* Look at adding 'sms-tool' (and 'luci-app-sms-tool') for SMS functionality
 * Cover band/cell locking; maybe add helper/watcher scripts for this
 
 
