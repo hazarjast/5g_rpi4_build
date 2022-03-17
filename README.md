@@ -48,6 +48,7 @@ If this project benefitted you in some way please consider supporting my efforts
       - [quickycom.sh](#quickycomsh)
     + [Switch Modem to Generic Image](#switch-modem-to-generic-image)
     + [Disable Modem NR SA](#disable-modem-nr-sa)
+    + [Built and Configure SMS Tool](#build-and-configure-sms-tool)
   * [Results](#results)  
   * [ToDo List](#todo-list)
   * [Historical Background](#historical-background)
@@ -490,6 +491,73 @@ qcom AT+CFUN=0
 qcom AT+QNWPREFCFG=\"nr5g_disable_mode\",1
 qcom AT+CFUN=1,1
 ```
+
+### Build and Configure SMS Tool
+Given many folks who setup service on a cellular line may need to periodically receive OTP or other SMS notifications for their account it will be helpful to have a way to send/receve text messages from the web interface of OpenWRT. Luckily such a tool exists for us: https://github.com/4IceG/luci-app-sms-tool . Only problem is that it is not part of the standard OpenWRT repositories for our release so we must cross-compile it ourselves. While GCC libraries and 'make' are availabe as OpenWRT packages, they don't include the rest of the toolchain which we need to succesfully compile the .ipk packages from the GitHub source code. The easiest way to cross-compile is to use another Linux machine to download the appropriate SDK for our architecture and release and then compile it there. I used by Ubuntu VPS which made quick work of it. Mostly the instructions and prerequisites are covered in high level here:
+https://openwrt.org/docs/guide-developer/toolchain/using_the_sdk
+https://openwrt.org/docs/guide-developer/toolchain/install-buildsystem
+
+The exact steps on my Ubuntu VPS are below for reference:
+
+```bash
+cd ~
+
+apt update
+
+apt install build-essential ccache ecj fastjar file g++ gawk gettext git java-propose-classpath libelf-dev libncurses5-dev libncursesw5-dev libssl-dev python python2.7-dev python3 unzip wget python3-distutils python3-setuptools python3-dev rsync subversion swig time xsltproc zlib1g-dev apt-transport-https ca-certificates -y
+
+update-ca-certificates
+
+curl https://archive.openwrt.org/releases/21.02.1/targets/bcm27xx/bcm2711/openwrt-sdk-21.02.1-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz -o sdk.tar.xz
+
+mkdir sdk
+
+tar -xf sdk.tar.xz -C ./sdk/
+
+cd sdk/openwrt-sdk-21.02.1-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64/package
+
+git clone https://github.com/4IceG/luci-app-sms-tool
+
+cd ..
+
+./scripts/feeds update -a
+(may run for a few minutes as it downloads ~2GB)
+
+./scripts/feeds install -a
+make menuconfig
+```
+At this point the menuconfig will open. Enter Global Build Settings and in the submenu, deselect/exclude the following options:
+- Select all target specific packages by default
+- Select all kernel module packages by default
+- Select all userspace packages by default
+(This cuts down on compile time for these we don't need which are selected by default)
+
+Go to LuCI > Applications and select 'luci-app-sms-tool' by pressing 'm'. Exit and choose 'Yes' to save changes to '.config'. Then we can compile:
+```bash
+make package/luci-app-sms-tool/compile
+```
+It will take some minutes to complete depending on CPU as it has to compile all dependencies along with the app source code. You can increase speed by adding the '-j[x]' switch where '[x]' is the number of CPUs the compile should be threaded across. With the default single CPU selection, it took 10-15 minutes to complete.The .ipk files for the resulting two apps, sms-tool and luci-app-sms-tool, will be located under '...bin/packages/aarch64_cortex-a72/base'. I used WinSCP to download them from my VPS and then upload them to the OpenWRT install. From there they could be instaled with opkg as normal:
+```bash
+root@OpenWrt:~# okpg install luci-app-sms-tool_1.9.3-20220315_all.ipk
+-ash: okpg: not found
+root@OpenWrt:~# opkg install luci-app-sms-tool_1.9.3-20220315_all.ipk
+Installing luci-app-sms-tool (1.9.3-20220315) to root...
+Installing luci-compat (git-22.046.85744-f08a0f6) to root...
+Downloading https://downloads.openwrt.org/releases/21.02.1/packages/aarch64_cortex-a72/luci/luci-compat_git-22.046.85744-f08a0f6_all.ipk
+Configuring luci-compat.
+Configuring luci-app-sms-tool.
+//usr/lib/opkg/info/luci-app-sms-tool.postinst: /etc/uci-defaults/start-smsled: line 5: /etc/init.d/smsled: Permission denied
+uci: Entry not found
+uci: Entry not found
+
+uci: Entry not found
+
+
+//usr/lib/opkg/info/luci-app-sms-tool.postinst: line 284: /etc/init.d/smsled: Permission denied
+//usr/lib/opkg/info/luci-app-sms-tool.postinst: line 286: /etc/init.d/smsled: Permission denied
+root@OpenWrt:~#
+```
+As you can see there were some errors on install but they do not seem to have affected the functionality of the packages in any way from my testing so far.
 
 # Results
 My local tower offers only n71 SA which is not allocated much bandwidth at present so I am operating in NSA mode with a PCC of B2 or B4/B66 aggregated with n41. The initial results are a solid improvement over my previous average speeds on LTE only and ping is much improved. The device has so far only been tested indoors so I am excited to get it outside and up high to see what additional speed improvements I may achieve under those conditions.
