@@ -25,14 +25,15 @@ MMCLI="/usr/bin/mmcli"
 MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
 SPEEDTEST="/usr/bin/speedtest"
 INFO="/usr/bin/logger -t NSA_CHECK"
+DISABLED=0
 THRESHOLD=100
 
 $INFO "Executing speedtest to determine if NSA is active..."
 $SPEEDTEST -p no > /tmp/speedtest.result && \
 [ $(egrep -o 'Download: *\d*' /tmp/speedtest.result | tr -d "Download: ") -gt $THRESHOLD ] || \
-$MMCLI -m $MINDEX -d >/dev/null 2>/dev/null ; DISABLED=1
+DISABLED=$($MMCLI -m $MINDEX -d >/dev/null 2>/dev/null ; echo 1)
 
-if [ -z $DISABLED ]
+if [ $DISABLED -eq 1 ]
 then
   $INFO "Speedtest download result less $THRESHOLD Mbps. NSA appears to be inactive."
   $INFO "Modem was disabled and will be reset momentarily by ModemWatcher."
