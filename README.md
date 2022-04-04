@@ -46,6 +46,7 @@ If this project benefitted you in some way please consider supporting my efforts
       - [fancontrol.sh](#fancontrolsh)
       - [modemwatcher.sh](#modemwatchersh)
       - [quickycom.sh](#quickycomsh)
+      - [nsacheck.sh](#nsachecksh)
     + [Switch Modem to Generic Image](#switch-modem-to-generic-image)
     + [Disable Modem NR SA](#disable-modem-nr-sa)
     + [Built and Configure SMS Tool](#build-and-configure-sms-tool)
@@ -469,6 +470,11 @@ This is an interactive wrapper for the 'socat' utility which allows us to commun
 **$CMD, $TIMEOUT** - AT command, timeout period before termindation (in seconds)
 
 **$ATDEVICE, $MMVID, $MMPID, $MMUBIND** - Found in '/lib/udev/rules.d/77-mm-[vendor]-port-types.rules'. '...ttyUSB2...AT primary port...ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0800", ENV{.MM_USBIFNUM}=="02"...' Ex. $ATDEVICE="/dev/ttyUSB2", MMVID="2c7c", MMPID="0800", MMUBIND="02".
+
+#### nsacheck.sh
+I noticed that sometimes after being connected to the cell for a long period of time (1 week+) the NSA aggregation abilities between the LTE control channel and NR channels seem to stop functioning. This was easily shown by a speedtest which failed to break the 100Mbps barrier when normally the properly functioning NSA connetion would exceed this easily (200Mbps+ average). This script is called by cron once daily during off hours (5AM my local time). It calls the Ookla speedtest CLI app for aarch64 (you must download this separately and place under '/usr/bin/speedtest'), then disables the modem via mmcli if the download result is not greater than *$THRESHOLD* (set to 100Mbps by default). The daemonized modemwatcher.sh script then restarts the modem when finding it disabled. If the speedtest download result is not greater than *$THRESHOLD* then no action is taken. The following inputs should be entered appropriately prior to first run:
+
+**$THRESHOLD** - Threshold in Mpbs; a result less than or equal to this will trigger disabling modem.
 
 ### Switch Modem to Generic Image
 In initial testing I found that the RM502Q-AE had Quectel's auto-image-switching feature activated by default. This 'feature' switches its firmware image (MBN) based on the carrier SIM which is inserted. Thus, when I inserted my carrier SIM it promptly switched to using the commercial image for my carrier. While this first party image allowed me to obtain IP assignment which was very geo-local (lowest latency), I noticed a significant loss of ICMP and UDP packets. Thus, ping and connectivity to UDP (such as external DNS, WireGuard, etc.) was completely broken at worst or unreliable at best.
