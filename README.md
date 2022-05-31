@@ -123,7 +123,7 @@ I've included affiliate links to items which are sold by The Wireless Haven as I
   * https://www.aliexpress.com/item/2251832539521487.html
 * **80mm PC Fan (x2)**
   * USB powered (5v)
-  * https://www.amazon.com/dp/B019ORFSD8
+  * https://www.amazon.com/dp/B07KWWPSS3
 * **80mm PC Fan Filter Grills (x2)**
   * Aluminum frame
   * Fine Stainless Steel mesh
