@@ -75,7 +75,7 @@ The goal of this project can be summed up as follows: Build a capable, stable, l
 
 
 ## Parts List
-I've included affiliate links to items which are sold by The Wireless Haven as I prefer to support local merchants were possible. The rest of the items can be sourced from the usual suspects and I'm not a big enough 'creator' to be accepted into their affilate programs so I won't be adding links for them :)
+I've included affiliate links to items which are sold by The Wireless Haven as I prefer to support local merchants were possible. The rest of the items can be sourced from the usual suspects (typically Amzon or AliExpress) via the non-affiliate links provided.
 
 * **Quectel RM502Q-AE**
   * Supports all current LTE and NR low and mid-spectrum bands by US carriers (no mmWave)
@@ -91,52 +91,68 @@ I've included affiliate links to items which are sold by The Wireless Haven as I
   * USB Type-C connector with Texas Instruments USB 3.0 control chip
   * Dual spring-loaded nano SIM slots
   * M.2 Key B connector for modem
+  * https://www.aliexpress.com/item/3256801409789720.html
   * Alternative single SIM slot version: https://thewirelesshaven.com/shop/mini-pcie-m2-adapters/modem-enclosure/usb3-0-to-ngff-m-2-key-b-4g-5g-modem-adapter-enclosure-with-sim-card-slot-new-style?aflt=3345
 * **12dBi 5G PCB Omnidirectional Antennas (x4)**
   * 20cm cable
   * IPEX4/MHF4 connectors
   * Frequency range: 600-6000Mhz
   * Physical dimensions: 100x21mm
+  * https://www.aliexpress.com/item/3256801813736407.html
 * **Raspberry Pi 4B**
   * 4GB SKU
+  * https://rpilocator.com/
 * **Class 10 MicroSD Card**
   * 32GB (simply because it was cheap)
+  * https://www.amazon.com/dp/B07P14QHB7
 * **RPi 4 Heatsink Kit**
   * Self-adhesive 3M tape
+  * https://www.amazon.com/dp/B07ZLZRDXZ
 * **IP67 Outdoor Project Box**
   * Plastic, pre-drilled mounting plate and included hardware
   * Stainless steel latches
   * Physical external dimensions 290x190x140mm
+  * https://www.amazon.com/dp/B09FL1GVW1
 * **Large Air & Moisture Vent (x2)**
   * Bud Industries IPV-1116
   * Physical dimensions 100x96x65.5mm
   * Hole dimension diameter: 88mm
+  * https://www.solutionsdirectonline.com/bud-industries-large-vent-kit-for-enclosures-ipv-1116
 * **88mm Hole Saw**
   * Steel alloy
+  * https://www.aliexpress.com/item/2251832539521487.html
 * **80mm PC Fan (x2)**
   * USB powered (5v)
+  * https://www.amazon.com/dp/B019ORFSD8
 * **80mm PC Fan Filter Grills (x2)**
   * Aluminum frame
   * Fine Stainless Steel mesh
+  * https://www.amazon.com/dp/B07LG41F1K
 * **USB 2.0 'Y' cable**
   * 1x female USB-A Data+Power
   * 2x Male USB-A (1x Power only, 1x Data+Power)
+  * https://www.amazon.com/dp/B00NIGO4NM
 * **USB Network Adapter**
   * Chipset should be supported by OpenWRT (Asix in this case)
   * Will only be used temporarily to download modem packages
+  * https://www.amazon.com/dp/B00FFJ0RKE
 * **USB 2.0, 4-port Hub***
   * D-Link DUB-H4 (HW. Rev. "D")
   * Small, square, black version
   * Provides PPPS (Per Port Power Switching)
+  * This specific USB hub seems to have disappeared from retail and secondhand channels (eBay) since I published this guide. An alternative, similiarly sized PPPS hub can be used instead as long as uhubctl supports it. Size-wise, the old Belkin F5U014 seems to be the most economical choice: https://www.ebay.com/sch/i.html?_from=R40&_nkw=F5U014&_sacat=0&_sop=15
 * **18AWG DC Power Cables**
   * 5.5x2.1mm 
   * Male+Female pairs (6x)
+  * https://www.amazon.com/dp/B09H4B32CR
 * **DC Step down voltage regulator (i.e. buck converter)**
   * 9v-36v input / 5v 6a output
   * DC barrel connector input/output
   * Additional USB-A connector output
+  * https://www.amazon.com/dp/B07X5H4M42
 * **Double Sided Mounting Tape**
   * 1" wide
+  * https://www.amazon.com/dp/B01AOFK85C
 * **802.3AT PoE Gigabit Splitter**
   * DC 48v input
   * DC 12v output
@@ -148,26 +164,35 @@ I've included affiliate links to items which are sold by The Wireless Haven as I
 * **320pc Nylon Standoff/Screw/Washer Kit**
   * Assorted lengths
   * M3 size
+  * https://www.amazon.com/dp/B07TP2YYQB
 * **Outdoor-grade Zip Cable Ties (2 sizes)**
-  * 10cm length, 18LB loop tensile strength (100ct)
+  * 10cm length, 18LB loop tensile strength (1000ct)
+  * https://www.amazon.com/dp/B0991KQD7L
   * 20cm length, 50LB loop tensile strength (100ct)
-  * Withstands a temperature range of -40-85c
+  * https://www.amazon.com/dp/B08DCLTZTH
 * **Wago LEVER-NUTS**
   * 3-Conductor
   * 24-12 AWG
+  * https://www.amazon.com/dp/B07NKT2P2F
 * **1' USB-C to USB-A cable**
   * Connects modem EVB to RPi USB 3.0
-* **6" USB-C PD to DC cable**
+  * https://www.amazon.com/dp/B08PXWYKTB
+* **1.5m USB-C PD to DC cable**
   * Connects buck converter to RPi power
-* **6" DC Male to DC Male**
+  * https://www.amazon.com/dp/B07T1HGK8J
+* **1.64' DC Male to DC Male**
   * Connects buck converter to modem EVB
+  * https://www.amazon.com/dp/B087CLKGHC
 * **1' Cat6 Ethernet Cable**
   * Connects PoE Splitter to RPi NIC
+  * https://www.amazon.com/dp/B003L1AET2
 * **Terminated Ethernet Wire Gland - Gray Nylon**
   * Heyco, 'Heyco-Tite' Liquid Tight Cordgrip
   * Part #s: M3201GBH (gland), 8464 (locknut)
   * Accepts pre-terminated Ethernet (RJ45)
   * 8.5mm NPT 
+  * https://www.mouser.com/ProductDetail/Heyco/M3201GBH?qs=IfoubJuuTRYcTpPsKiGu9A%3D%3D
+  * https://www.mouser.com/ProductDetail/Heyco/8464?qs=w%252B6LKBEmuY2wlifm1%2FbnMg%3D%3D
 
 ## Important Component Selection Information
 ### Quectel RM502Q-AE
