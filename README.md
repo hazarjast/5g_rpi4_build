@@ -180,6 +180,7 @@ I've included affiliate links to items which are sold by The Wireless Haven as I
 * **1.5m USB-C PD to DC cable**
   * Connects buck converter to RPi power
   * https://www.amazon.com/dp/B07T1HGK8J
+  * (above link had to be changed to longer cable due to supplier change on Amazon; just use a zip-tie for the excess to keep things tidy)
 * **1.64' DC Male to DC Male**
   * Connects buck converter to modem EVB
   * https://www.amazon.com/dp/B087CLKGHC
