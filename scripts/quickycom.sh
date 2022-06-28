@@ -6,7 +6,7 @@
 # This wrapper allows sending of AT commands, which provide instant return output, to the modem easily.
 # Includes an additional 'timeout' failsafe (SIGTERM after $TIMEOUT, SIGKILL after an add'l $TIMEOUT).
 # For some query commands (ex. +COPS, +QSCAN, etc.) it is recommended to open an interactive session:
-# ex. 'socat -W - $ATDEVICE'. This is because it may take a long time for the modem to return a value.
+# ex. 'socat - $ATDEVICE'. This is because it may take a long time for the modem to return a value.
 #
 # NOTE: A ModemManager udev rule is added at first run to unbind the primary AT port for our use.
 # User is then prompted to reboot OpenWRT for the change to take effect.
@@ -97,8 +97,8 @@ then
   echo "No AT command entered. Exiting."
   exit 1
 else
-  ATE0=$(timeout -k 5 5 echo -e ATE0 | socat -W - $ATDEVICE,crnl) # Deactivate AT echo if it is enabled
-  [ $ATE0 = "OK" ] && timeout -k $TIMEOUT $TIMEOUT echo -e $CMD | socat -W - $ATDEVICE,crnl || \
+  ATE0=$(timeout -k 5 5 echo -e ATE0 | socat - $ATDEVICE,crnl) # Deactivate AT echo if it is enabled
+  [ $ATE0 = "OK" ] && timeout -k $TIMEOUT $TIMEOUT echo -e $CMD | socat - $ATDEVICE,crnl || \
   echo "$ATDEVICE appears to be busy. Try again later."
 fi
 
