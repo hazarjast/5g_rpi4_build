@@ -26,6 +26,7 @@ INFO="/usr/bin/logger -t FAILSAFE"
 DISABLED=0
 PIDFILE=/var/run/failsafe.pid
 LOOPPID=/var/run/failsafe_loop.pid
+CYCLING=/var/run/modem.cycling
 FRESET=0
 PINGDST="google.com cloudflare.com"
 LIFACE="WWAN"
@@ -133,7 +134,12 @@ $INFO "Failsafe initialized!"
 # Main failsafe logic
 while true
 do
-  check
+  if [ -f $CYCLING ]
+  then
+    check
+  else
+    $INFO "ModemWatcher is already restarting the modem. Skipping check."
+  fi  
   sleep $INTERVAL
 done & echo $! > $LOOPPID
 
