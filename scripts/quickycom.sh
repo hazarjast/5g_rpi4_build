@@ -32,7 +32,7 @@
 #
 # Copyright 2022 hazarjast (and aliases) - hazarjast at protonmail dot com
 #
-
+INFO="/usr/bin/logger -t QUICKY_COM"
 PIDFILE=/var/run/quickycom.pid
 CMD="$1"
 TIMEOUT=5
@@ -80,8 +80,8 @@ ATTRS{idVendor}=="$MMVID", ATTRS{idProduct}=="$MMPID", ENV{.MM_USBIFNUM}=="$MMUB
 LABEL="mm_test_end"
 EOF
 
-  echo "$(date) - Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
-  echo "$(date) - ModemManager config changes were made. Prompted user to reboot."
+  $INFO "Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
+  $INFO "ModemManager config changes were made. Prompted user to reboot."
   echo "ModemManager config changes were made. Please reboot OpenWRT before executing this script again."
   exit 0
 else
