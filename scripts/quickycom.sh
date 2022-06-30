@@ -80,6 +80,9 @@ ATTRS{idVendor}=="$MMVID", ATTRS{idProduct}=="$MMPID", ENV{.MM_USBIFNUM}=="$MMUB
 LABEL="mm_test_end"
 EOF
 
+  # Create symlink for easy calls going forward
+  [ -f /usr/sbin/qcom ] || ln -s /scripts/quickycom.sh /usr/sbin/qcom
+
   $INFO "Unbound ModemManager from USBIFNUM $MMUBIND on modem $MMVID:$MMPID."
   $INFO "ModemManager config changes were made. Prompted user to reboot."
   echo "ModemManager config changes were made. Please reboot OpenWRT before executing this script again."
@@ -87,9 +90,6 @@ EOF
 else
   continue
 fi
-
-# Create symlink for easy calls going forward
-[ -f /usr/sbin/qcom ] || ln -s /scripts/quickycom.sh /usr/sbin/qcom
 
 # If $CMD entered, send it to the interface; SIGTERM and then SIGKILL (if necesary) socat if it hangs
 if [ -z $CMD ]
