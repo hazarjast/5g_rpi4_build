@@ -4,7 +4,7 @@
 # *Script info*
 # Ping destination at a given interval. On first failure, disable modem.
 # ModemWatcher sees modem is disabled and will restart it. 
-# If connectivity is not restored after modem resetart, failover to secondary carrier if present.
+# If connectivity is not restored after modem restart, failover to secondary carrier if present.
 #
 # *Assumptions*
 # Script to be used for a single ModemManager modem defined as $LIFACE in uci.
@@ -27,10 +27,11 @@ DISABLED=0
 PIDFILE=/var/run/failsafe.pid
 LOOPPID=/var/run/failsafe_loop.pid
 CYCLING=/var/run/modem.cycling
-FRESET=0
 PINGDST="google.com cloudflare.com"
 LIFACE="WWAN"
 INTERVAL=60
+SIM1=TMO
+SIM2=ATT
 
 # Preliminary logic to ensure this only runs one instance at a time
 [ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
@@ -90,21 +91,10 @@ done
 # Checks for connectivity with 'pinger' and exits early if found
 check() {
 pinger
-if [ $CONNECTED -eq 1 ] && [ $FRESET -eq 0 ]
+if [ $CONNECTED -eq 1 ]
 then
   $INFO "Modem is connected to the internet."
-elif [ $FRESET -eq 1 ]
-then
-  $INFO "$LIFACE was restarted. Cycling modem."
-  FRESET=0
-  mcycle
-  pinger
-    if [ $CONNECTED -eq 1 ]
-    then
-      $INFO "Modem is connected to the internet."
-    else
-      $INFO "Still cannot reach Internet. Send help."
-    fi
+  $INFO "Sleeping $INTERVAL seconds until next check."
 else
   $INFO "Cannot reach internet. Cycling modem."
   mcycle
@@ -113,9 +103,22 @@ else
     then
       $INFO "Modem is connected to the internet."
     else
-      $INFO "Still cannot reach Internet. Send help."
+      $INFO "Still cannot reach Internet. Failing over to $SIM2"
+      failover
+      pinger
+        if [ $CONNECTED -eq 1 ]
+        then
+          $INFO "Failover successful. Modem is connected to the internet via $SIM2."
+        else
+          $INFO "Still cannot reach internet. Aborting."
+        fi
     fi
 fi
+}
+
+# Restarts modem if no connectivity is found or if $LIFACE is restarted
+mcycle() {
+$MMCLI -m $MINDEX -d >/dev/null 2>/dev/null
 }
 
 # Function to cleanup processes and pidfiles when script is terminated
@@ -134,7 +137,7 @@ $INFO "Failsafe initialized!"
 # Main failsafe logic
 while true
 do
-  if [ -f $CYCLING ]
+  if [ ! -f $CYCLING ]
   then
     check
   else
