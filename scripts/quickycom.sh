@@ -97,8 +97,13 @@ then
   echo "No AT command entered. Exiting."
   exit 1
 else
-  [ -e $ATDEVICE ] && ATE0=$(timeout -k 5 5 echo -e ATE0 | socat - $ATDEVICE,crnl) # Deactivate AT echo if it is enabled
-  [ $ATE0 = "OK" ] && timeout -k $TIMEOUT $TIMEOUT echo -e $CMD | socat - $ATDEVICE,crnl || \
+  # Deactivate AT echo if it is enabled. If we don't, commands can get stuck in an echo loop.
+  $(ls -al $ATDEVICE |grep -q 'crw') && ATE0=$(timeout -k 5 5 echo -e ATE0 | socat - $ATDEVICE,crnl | xargs)
+
+  # Validate AT echo was successfully deactivated, then send our command.
+  [ "$ATE0" = "OK" ] && timeout -k $TIMEOUT $TIMEOUT echo -e $CMD | socat - $ATDEVICE,crnl || \
+
+  # Return error if AT echo was not confirmed to be deactivated.
   echo "$ATDEVICE appears to be busy. Try again later."
 fi
 
