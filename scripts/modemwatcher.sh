@@ -29,6 +29,7 @@ LIFACE="WWAN"
 PIDFILE=/var/run/modem_watcher.pid
 WATCHPID="/var/run/modem_logread.pid"
 LOOPPID="/var/run/modem_loop.pid"
+CYCLING="/var/run/modem.cycling"
 INFO="/usr/bin/logger -t MODEM_WATCHER"
 ERROR="/usr/bin/logger -p err -t MODEM_WATCHER"
 DISCONNECT="state changed (connected ->"
@@ -139,8 +140,10 @@ fi
 # Restarts modem if no connectivity is found or if $LIFACE is restarted
 mcycle() {
 MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
+touch $CYCLING
 $MMCLI -m $MINDEX -r >/dev/null 2>/dev/null
 watch $RECONNECT
+rm $CYCLING
 }
 
 # Cleanup $PIDFILE and kill watcher loop when daemon is stopped
