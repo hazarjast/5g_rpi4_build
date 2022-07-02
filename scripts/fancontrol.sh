@@ -159,7 +159,9 @@ $INFO "Fan controller initialized!"
 # Trigger fan behavior based on current temp
 while true
 do
-  [ -e $ATDEVICE ] && ATE0=$(timeout -k 5 5 echo -e ATE0 | socat - $ATDEVICE,crnl) # Deactivate AT echo if it is enabled
+  # Deactivate AT echo if it is enabled. If we don't, commands can get stuck in an echo loop.
+  $(ls -al $ATDEVICE |grep -q 'crw') && ATE0=$(timeout -k 5 5 echo -e ATE0 | socat - $ATDEVICE,crnl | xargs)
+
   [ $ATE0 = "OK" ] && TEMP=$(timeout -k 5 5 echo -e AT+QTEMP | socat - $ATDEVICE,crnl | grep cpu0-a7-usr | egrep -wo "[0-9][0-9]")
   if $(echo $TEMP | egrep -qwo "[0-9][0-9]")
   then
