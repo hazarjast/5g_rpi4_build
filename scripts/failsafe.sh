@@ -21,17 +21,20 @@
 # Copyright 2022 hazarjast (and aliases) - hazarjast at protonmail dot com
 #
 MMCLI="/usr/bin/mmcli"
-MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
 INFO="/usr/bin/logger -t FAILSAFE"
 DISABLED=0
-PIDFILE=/var/run/failsafe.pid
-LOOPPID=/var/run/failsafe_loop.pid
-CYCLING=/var/run/modem.cycling
+SIM1FAILS=0
+SIM2FAILS=0
+PIDFILE="/var/run/failsafe.pid"
+LOOPPID="/var/run/failsafe_loop.pid"
+CYCLING="/var/run/modem.cycling"
 PINGDST="google.com cloudflare.com"
 LIFACE="WWAN"
 INTERVAL=60
-SIM1=TMO
-SIM2=ATT
+SIM1="TMO"
+SIM1APN="fast.t-mobile.com"
+SIM2="ATT"
+SIM2APN="broadband"
 
 # Preliminary logic to ensure this only runs one instance at a time
 [ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
@@ -88,6 +91,14 @@ do
 done
 }
 
+failover() {
+# Fail modem over to secondary carrier SIM after primary carrier SIM fails to reconnect
+uci set network.$LIFACE.apn='$SIM2APN'
+uci commit network
+luci-reload
+mmcli -m $MINDEX --set-primary-sim-slot=2
+}
+
 # Checks for connectivity with 'pinger' and exits early if found
 check() {
 pinger
@@ -97,11 +108,13 @@ then
   $INFO "Sleeping $INTERVAL seconds until next check."
 else
   $INFO "Cannot reach internet. Cycling modem."
-  mcycle
+  SIM1FAILS=`expr $SIM1FAILS + 1`
+  [ $SIM1FAILS -ge 2 ] && mcycle
   pinger
     if [ $CONNECTED -eq 1 ]
     then
-      $INFO "Modem is connected to the internet."
+      $INFO "Modem successfully reconnected to the internet."
+      $INFO "$SIM1 connection has failed $SIM1FAILS time(s)."
     else
       $INFO "Still cannot reach Internet. Failing over to $SIM2"
       failover
@@ -116,8 +129,9 @@ else
 fi
 }
 
-# Restarts modem if no connectivity is found or if $LIFACE is restarted
 mcycle() {
+# Disables modem if no connectivity is found or on SIM failover.
+# modemwatcher.sh detects modem is disabled and performs the acual restart.
 $MMCLI -m $MINDEX -d >/dev/null 2>/dev/null
 }
 
@@ -139,6 +153,7 @@ while true
 do
   if [ ! -f $CYCLING ]
   then
+     MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
     check
   else
     $INFO "ModemWatcher is already restarting the modem. Skipping check."
