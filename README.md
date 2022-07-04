@@ -47,7 +47,7 @@ If this project benefitted you in some way please consider supporting my efforts
       - [modemwatcher.sh](#modemwatchersh)
       - [quickycom.sh](#quickycomsh)
       - [nsacheck.sh](#nsachecksh)
-      - [failsafe.sh] (#failsafesh)
+      - [failsafe.sh](#failsafesh)
     + [Switch Modem to Generic Image](#switch-modem-to-generic-image)
     + [Disable Modem NR SA](#disable-modem-nr-sa)
     + [Built and Configure SMS Tool](#build-and-configure-sms-tool)
