@@ -2,9 +2,9 @@
 
 #
 # *Script info*
-# Ping destination at a given interval. On first failure, disable modem.
+# Ping destination at a given interval. On failure, disable modem.
 # ModemWatcher sees modem is disabled and will restart it. 
-# If connectivity is not restored after modem restart, failover to secondary carrier if present.
+# This covers the edge case where carrier side routing becomes broken on a cell.
 #
 # *Assumptions*
 # Script to be used for a single ModemManager modem defined as $LIFACE in uci.
@@ -13,7 +13,7 @@
 # At first run this script will add this script to 'pservice' config.
 #
 # *Required Inputs*
-# $PINGDST, $LIFACE - Domains to ping, logical (uci) name of the modem interface.
+# $PINGDST, $LIFACE, $INTERVAL - Domains to ping, logical (uci) name of the modem interface, and interval.
 #
 # *Dependencies*
 # This script requires 'modemmanager' and 'modemwatcher.sh' to be installed and active.
@@ -23,18 +23,12 @@
 MMCLI="/usr/bin/mmcli"
 INFO="/usr/bin/logger -t FAILSAFE"
 DISABLED=0
-SIM1FAILS=0
-SIM2FAILS=0
 PIDFILE="/var/run/failsafe.pid"
 LOOPPID="/var/run/failsafe_loop.pid"
 CYCLING="/var/run/modem.cycling"
 PINGDST="google.com cloudflare.com"
 LIFACE="WWAN"
-INTERVAL=60
-SIM1="TMO"
-SIM1APN="fast.t-mobile.com"
-SIM2="ATT"
-SIM2APN="broadband"
+INTERVAL=300
 
 # Preliminary logic to ensure this only runs one instance at a time
 [ -f $PIDFILE ] && PFEXST="true" || PFEXST="false"
@@ -63,7 +57,7 @@ config pservice
 EOF
 
   echo "Setup 'failsafe' as a pservice daemon."
-  echo "Execute '/etc/init.d/pservice [re]start' or reboot OpenWRT to start it."
+  echo "Execute 'service pservice [re]start' or reboot OpenWRT to start it."
   $INFO "Pservice daemon configured. Notified user to manually start it or reboot."
   exit 0
 else
@@ -91,14 +85,6 @@ do
 done
 }
 
-failover() {
-# Fail modem over to secondary carrier SIM after primary carrier SIM fails to reconnect
-uci set network.$LIFACE.apn='$SIM2APN'
-uci commit network
-luci-reload
-mmcli -m $MINDEX --set-primary-sim-slot=2
-}
-
 # Checks for connectivity with 'pinger' and exits early if found
 check() {
 pinger
@@ -108,31 +94,18 @@ then
   $INFO "Sleeping $INTERVAL seconds until next check."
 else
   $INFO "Cannot reach internet. Cycling modem."
-  SIM1FAILS=`expr $SIM1FAILS + 1`
-  [ $SIM1FAILS -ge 2 ] && mcycle
+  MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
+  $MMCLI -m $MINDEX -d >/dev/null 2>/dev/null
+  $INFO "Waiting one minute for the modem to reconnect."
+  sleep 60
   pinger
     if [ $CONNECTED -eq 1 ]
     then
       $INFO "Modem successfully reconnected to the internet."
-      $INFO "$SIM1 connection has failed $SIM1FAILS time(s)."
     else
-      $INFO "Still cannot reach Internet. Failing over to $SIM2"
-      failover
-      pinger
-        if [ $CONNECTED -eq 1 ]
-        then
-          $INFO "Failover successful. Modem is connected to the internet via $SIM2."
-        else
-          $INFO "Still cannot reach internet. Aborting."
-        fi
+      $INFO "Unable to restore connection, sleeping $INTERVAL seconds until next check."
     fi
 fi
-}
-
-mcycle() {
-# Disables modem if no connectivity is found or on SIM failover.
-# modemwatcher.sh detects modem is disabled and performs the acual restart.
-$MMCLI -m $MINDEX -d >/dev/null 2>/dev/null
 }
 
 # Function to cleanup processes and pidfiles when script is terminated
@@ -153,7 +126,6 @@ while true
 do
   if [ ! -f $CYCLING ]
   then
-     MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
     check
   else
     $INFO "ModemWatcher is already restarting the modem. Skipping check."
