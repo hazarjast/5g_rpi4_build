@@ -93,7 +93,7 @@ then
   $INFO "Modem is connected to the internet."
   $INFO "Sleeping $INTERVAL seconds until next check."
 else
-  $INFO "Cannot reach internet. Cycling modem."
+  $INFO "Cannot reach internet. Disabling modem."
   MINDEX="$($MMCLI -L -K | egrep -o '/org/freedesktop/.*' | tr -d "'")"
   $MMCLI -m $MINDEX -d >/dev/null 2>/dev/null
   $INFO "Waiting one minute for the modem to reconnect."
