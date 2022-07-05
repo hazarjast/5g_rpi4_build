@@ -472,6 +472,20 @@ For this project we will need some scripts to achieve the goals we made at the o
 
 For daemonized scripts, we control them using the 'pservice' package. This is a very simple OpenWRT package which is a wrapper for shell scripts which should run as daemons. The reason to use this package to manage such scripts is that it saves us from having to create and maintain individual 'init.d' service defintions for each script. One downside is that 'pservice' does not handle child processes (descendants) which are launched from inside our script functions. Thus, our scripts must track any subshell processes created so that we can intercept signals on termination by 'pservice' (mostly 'SIGTERM') and end them prior to the main script ending so as not to leave orphan processes when stopping/starting/restarting 'pservice'. Final point to note is that 'pservice' start/stop controls all scripts together and not individually. If one wishes to control each script daemon individually then one would be encouraged to write proper service files for each one to be called by procd directly on boot.
 
+**NOTE**
+It is important to mention two very important points about the helper scripts in regards to OpenWRT's default system log implementation. The first is that scripts like 'modemwatcher.sh' below rely on a lot level of 'Debug' to function properly so that they can pull things like modem connection state changes as reported by ModemManager. The second is that scripts like 'fancontrol.sh' are quite chatty with their default run interval and so they can fill the log buffer pretty quickly at the default OpenWRT size of 64KiB. For this reason, and since we have plenty of RAM to spare with our RPi 4, it is recommended to increase the log buffer substantially. In my case I've set it to 1GB:
+<img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-07-05_11h12_15.png" />
+
+Since the log buffer will be very large it will be helpful when reading it back to filter it by helper script tag. This can be done via 'logread -e [TAG]', where '[TAG]' is the name of the logger tag used by the script (ex. 'MODEM_WATCHER' for 'modemwatcher.sh', 'FAN_CONTROL', for 'fancontrol.sh', etc.). You can then filter filter by last-written log by piping the output to 'tail' like so:
+
+```bash
+logread -e MODEM_WATCHER | tail -n 50
+(shows the last 50 entries from 'modemwatcher.sh')
+
+logread -e FAN_CONTROL | tail -n 10
+(shows the last 10 entries from 'fancontrol.sh')
+```
+
 #### fancontrol.sh
 This script controls our case fans. On first run this script will add itself to 'pservice' config if not present already. Also, on first run it sets a hotplug rule for the USB hub so that when disconnected/reconnected it will keep the fans powered off unless otherwise controlled by the script. Further, it checks that the selected modem AT interface is unbound from ModemManager so we can use it. If this isn't the case, it creates the necessary 'udev' rule to unbind the interface and prompts the user to reboot for the change to take effect. The script runs as a daemon under 'pservice' and checks the modem SoC temperature once per minute. If the temperature is over the defined limit threshold (55c by default), it will power on the fans. Once the modem has cooled below the limit, the fans are deactivated. Fan activation/deactivation by this script is logged to the system log; the history can be viewed with 'logread -e FAN_CONTROL'. Before running this script the following variables should be entered appropriately:
 
