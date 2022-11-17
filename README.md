@@ -435,12 +435,12 @@ It will be necessary to add custom firewall rules ('Network > Firewall > Custom 
 
 ```bash
 #IPv4 TTL mod
-iptables -w -t mangle -C POSTROUTING -o wwan0 -j TTL --ttl-set 65 > /dev/null 2>&1 || \
-iptables -w -t mangle -I POSTROUTING 1 -o wwan0 -j TTL --ttl-set 65
+iptables -w -t mangle -C POSTROUTING -o wwan0 ! -p icmp -j TTL --ttl-set 65 > /dev/null 2>&1 || \
+iptables -w -t mangle -I POSTROUTING 1 -o wwan0 ! -p icmp -j TTL --ttl-set 65
 
 #IPv6 TTL mod (prevents leaks not covered by IPv4 rules)
-ip6tables -w -t mangle -C POSTROUTING -o wwan0 -j HL --hl-set 65 > /dev/null 2>&1 || \
-ip6tables -w -t mangle -I POSTROUTING 1 -o wwan0 -j HL --hl-set 65`
+ip6tables -w -t mangle -C POSTROUTING -o wwan0 ! -p icmpv6 -m hl ! --hl-eq 255 -j HL --hl-set 65 > /dev/null 2>&1 || \
+ip6tables -w -t mangle -I POSTROUTING 1 -o wwan0 ! -p icmpv6 -m hl ! --hl-eq 255 -j HL --hl-set 65
 ```
 
 <img src="https://github.com/hazarjast/5g_rpi4_build/blob/main/assets/2022-01-15_12h16_28.png" />
