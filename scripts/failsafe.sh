@@ -79,7 +79,7 @@ do
       PIFACE=$(ubus -v call network.interface.$LIFACE status | egrep -o 'l3_device.*' | tr -d "l3_device: \|\"\,")
       sleep 1
     done
-    ping -I $PIFACE -c1 $DEST >/dev/null 2>/dev/null
+    ping -I $PIFACE -W10 -c1 $DEST >/dev/null 2>/dev/null
     [ $? -eq 0 ] && CONNECTED=1
   fi
 done
